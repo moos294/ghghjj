@@ -23,6 +23,8 @@ local Cfg = {
     AutoHaloEgg = false, HaloEggName = "SkyHaloEgg", HaloEggPrice = 1, HaloEggQty = 1,
     EggCurrency = "Gem", EggInterval = 0.1,
     AutoTrain = false, TrainAction = "Dumbbell", TrainActionCN = "哑铃", TrainInterval = 0.2,
+    FastTrain = false, FastTrainAction = "Dumbbell", FastTrainActionCN = "哑铃",
+    FastPerBeat = 1, FastMaxPerSecond = 0, FastTotalReps = 0,
     AutoRebirth = false, TargetStrength = 10000, RebirthInc = 10000, TargetRebirthCount = 5,
     RebirthCheckInterval = 0.1, RebirthCooldown = 0.1,
     InfiniteRebirth = false, BaseStrength = 10000,
@@ -129,6 +131,13 @@ TrainSection:Toggle({ Title = "自动锻炼", Value = false, Callback = function
 TrainSection:Dropdown({ Title = "选择动作 (中文)", Values = ActionListCN, Value = "哑铃", Multi = false, Callback = function(selected) local cn = selected local en = ActionMap[cn] if en then Cfg.TrainAction = en Cfg.TrainActionCN = cn end end })
 TrainSection:Slider({ Title = "锻炼间隔 (秒)", Value = { Min = 0.1, Max = 1.0, Default = 0.2 }, Step = 0.05, Callback = function(value) Cfg.TrainInterval = value end })
 local TrainStatus = TrainSection:Paragraph({ Title = "锻炼状态", Desc = "待机中..." })
+
+local FastTrainSection = MainTab:Section({ Title = "⚡ 无间隔锻炼 (极速)", Icon = "gauge" })
+FastTrainSection:Toggle({ Title = "无间隔自动锻炼", Value = false, Callback = function(state) Cfg.FastTrain = state end })
+FastTrainSection:Dropdown({ Title = "选择动作 (中文)", Values = ActionListCN, Value = "哑铃", Multi = false, Callback = function(selected) local cn = selected local en = ActionMap[cn] if en then Cfg.FastTrainAction = en Cfg.FastTrainActionCN = cn end end })
+FastTrainSection:Slider({ Title = "每帧触发次数", Desc = "1=每帧1次 (≈60次/秒)", Value = { Min = 1, Max = 10, Default = 1 }, Step = 1, Callback = function(value) Cfg.FastPerBeat = value end })
+FastTrainSection:Slider({ Title = "每秒上限 (0=不限)", Desc = "防踢设置", Value = { Min = 0, Max = 100, Default = 0 }, Step = 5, Callback = function(value) Cfg.FastMaxPerSecond = value end })
+local FastTrainStatus = FastTrainSection:Paragraph({ Title = "极速锻炼状态", Desc = "待机中..." })
 
 local RebirthSection = MainTab:Section({ Title = "💀 自动重生 (限次)", Icon = "refresh-cw" })
 RebirthSection:Toggle({ Title = "自动重生", Value = false, Callback = function(state) Cfg.AutoRebirth = state end })
@@ -403,6 +412,54 @@ task.spawn(function()
 end)
 
 task.spawn(function()
+    local fastTrainEvent
+    pcall(function() fastTrainEvent = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("TrainEvent") end)
+    local beatCount, windowStart = 0, tick()
+    RunService.Heartbeat:Connect(function()
+        if not Cfg.FastTrain or not fastTrainEvent then
+            beatCount = 0
+            windowStart = tick()
+            return
+        end
+        if tick() - windowStart >= 1 then
+            windowStart = tick()
+            beatCount = 0
+        end
+        for _ = 1, Cfg.FastPerBeat do
+            if Cfg.FastMaxPerSecond > 0 and beatCount >= Cfg.FastMaxPerSecond then break end
+            local ok = pcall(function() fastTrainEvent:FireServer(Cfg.FastTrainAction) end)
+            if ok then
+                Cfg.FastTotalReps = Cfg.FastTotalReps + 1
+                Cfg.TotalReps = Cfg.TotalReps + 1
+                beatCount = beatCount + 1
+            else
+                break
+            end
+        end
+    end)
+end)
+
+task.spawn(function()
+    local lastReps, lastTime = 0, tick()
+    while SG.Parent do
+        task.wait(0.5)
+        if Cfg.FastTrain then
+            local now = tick()
+            local dt = now - lastTime
+            local rate = 0
+            if dt >= 0.5 then
+                rate = math.floor((Cfg.FastTotalReps - lastReps) / dt)
+                lastReps = Cfg.FastTotalReps
+                lastTime = now
+            end
+            FastTrainStatus:SetDesc(string.format("极速: %s | 速率 %d/s | 累计 %d", Cfg.FastTrainActionCN, rate, Cfg.FastTotalReps))
+        else
+            FastTrainStatus:SetDesc("待机中...")
+        end
+    end
+end)
+
+task.spawn(function()
     local rebirthEvent
     pcall(function() rebirthEvent = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("RebirthEvent") end)
     while true do
@@ -491,4 +548,4 @@ player.Idled:Connect(function()
 end)
 
 applyWalkSpeed()
-print("[融合版] WindUI控制面板 + 悬浮窗 + 飞行 + 自动重生 已加载")
+print("[融合版] WindUI控制面板 + 悬浮窗 + 飞行 + 自动重生 + 无间隔极速锻炼 已加载")
