@@ -48,7 +48,7 @@ local function stroke(p, c, t, tr)
     return s
 end
 
-local W, H = 680, 420
+local W, H = 500, 420
 
 local Main = Instance.new("Frame")
 Main.Size = UDim2.new(0, W, 0, H)
@@ -111,7 +111,7 @@ local CloseBtn = topBtn("×", -16, true)
 local MinBtn = topBtn("−", -56, false)
 
 local Sidebar = Instance.new("Frame")
-Sidebar.Size = UDim2.new(0, 160, 1, -44)
+Sidebar.Size = UDim2.new(0, 130, 1, -44)
 Sidebar.Position = UDim2.new(0, 0, 0, 44)
 Sidebar.BackgroundColor3 = C.sidebar
 Sidebar.BorderSizePixel = 0
@@ -123,13 +123,13 @@ NavList.Parent = Sidebar
 
 local NavPad = Instance.new("UIPadding")
 NavPad.PaddingTop = UDim.new(0, 12)
-NavPad.PaddingLeft = UDim.new(0, 10)
-NavPad.PaddingRight = UDim.new(0, 10)
+NavPad.PaddingLeft = UDim.new(0, 8)
+NavPad.PaddingRight = UDim.new(0, 8)
 NavPad.Parent = Sidebar
 
 local Content = Instance.new("Frame")
-Content.Size = UDim2.new(1, -160, 1, -44)
-Content.Position = UDim2.new(0, 160, 0, 44)
+Content.Size = UDim2.new(1, -130, 1, -44)
+Content.Position = UDim2.new(0, 130, 0, 44)
 Content.BackgroundColor3 = C.bg
 Content.BorderSizePixel = 0
 Content.ClipsDescendants = true
@@ -172,8 +172,8 @@ local function makePage(name)
     local pad = Instance.new("UIPadding")
     pad.PaddingTop = UDim.new(0, 16)
     pad.PaddingBottom = UDim.new(0, 16)
-    pad.PaddingLeft = UDim.new(0, 18)
-    pad.PaddingRight = UDim.new(0, 18)
+    pad.PaddingLeft = UDim.new(0, 14)
+    pad.PaddingRight = UDim.new(0, 14)
     pad.Parent = p
 
     local layout = Instance.new("UIListLayout")
@@ -188,10 +188,10 @@ local function makeNavBtn(icon, label, pageName)
     local b = Instance.new("TextButton")
     b.Size = UDim2.new(1, 0, 0, 38)
     b.BackgroundColor3 = C.card
-    b.Text = "  " .. icon .. "   " .. label
+    b.Text = "  " .. icon .. "  " .. label
     b.TextColor3 = C.textDim
     b.Font = Enum.Font.GothamMedium
-    b.TextSize = 13
+    b.TextSize = 12
     b.TextXAlignment = Enum.TextXAlignment.Left
     b.AutoButtonColor = false
     b.BorderSizePixel = 0
@@ -290,8 +290,8 @@ local function makeSlider(parent, title, desc, defaultVal, minV, maxV)
     local card = makeCard(parent, title, desc, 72)
 
     local valLabel = Instance.new("TextLabel")
-    valLabel.Size = UDim2.new(0, 60, 0, 24)
-    valLabel.Position = UDim2.new(1, -180, 0, 18)
+    valLabel.Size = UDim2.new(0, 50, 0, 24)
+    valLabel.Position = UDim2.new(1, -160, 0, 18)
     valLabel.BackgroundTransparency = 1
     valLabel.Text = tostring(defaultVal)
     valLabel.TextColor3 = C.text
@@ -300,8 +300,8 @@ local function makeSlider(parent, title, desc, defaultVal, minV, maxV)
     valLabel.Parent = card
 
     local barBg = Instance.new("Frame")
-    barBg.Size = UDim2.new(0, 100, 0, 4)
-    barBg.Position = UDim2.new(1, -110, 0, 28)
+    barBg.Size = UDim2.new(0, 90, 0, 4)
+    barBg.Position = UDim2.new(1, -100, 0, 28)
     barBg.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
     barBg.BorderSizePixel = 0
     barBg.Parent = card
