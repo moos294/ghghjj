@@ -105,7 +105,6 @@ local function drawCatFace(parent, cx, cy, scale, alpha, zBase)
     alpha = alpha or 0
     zBase = zBase or 3
     local baseSize = 100 * scale
-
     local glow = Instance.new("Frame")
     glow.Size = UDim2.new(0, baseSize + 20, 0, baseSize + 20)
     glow.Position = UDim2.new(0, cx - baseSize/2 - 10, 0, cy - baseSize/2 - 10)
@@ -326,7 +325,6 @@ local function drawBolt(parent, x, y, w, h, rot, color, alpha, z)
     b.ZIndex = z or 2
     b.Parent = parent
     corner(b, 2)
-
     local b2 = Instance.new("Frame")
     b2.Size = UDim2.new(0, w * 0.6, 0, h * 0.7)
     b2.Position = UDim2.new(0, x + 8, 0, y + h * 0.5)
@@ -343,34 +341,26 @@ local function drawLightningField(parent, alpha, z)
     local AB = Color3.fromRGB(120, 210, 255)
     local AB2 = Color3.fromRGB(180, 230, 255)
     local AB3 = Color3.fromRGB(80, 170, 255)
-
     drawBolt(parent, 30, -20, 5, 90, 20, AB, alpha, z)
     drawBolt(parent, 60, 30, 4, 60, -25, AB2, alpha, z)
     drawBolt(parent, 15, 70, 4, 80, 35, AB3, alpha, z)
     drawBolt(parent, 90, -15, 5, 100, -15, AB2, alpha, z)
-
     drawBolt(parent, 430, -20, 5, 100, -25, AB, alpha, z)
     drawBolt(parent, 400, 40, 4, 70, 30, AB2, alpha, z)
     drawBolt(parent, 450, 90, 5, 80, -35, AB3, alpha, z)
     drawBolt(parent, 470, 10, 4, 90, 15, AB2, alpha, z)
-
     drawBolt(parent, 130, 260, 4, 70, -20, AB, alpha, z)
     drawBolt(parent, 340, 270, 5, 80, 15, AB2, alpha, z)
     drawBolt(parent, 220, 280, 4, 60, -10, AB3, alpha, z)
-
     drawBolt(parent, 5, 150, 4, 60, 45, AB2, alpha, z)
     drawBolt(parent, 480, 180, 4, 70, -40, AB, alpha, z)
 end
 
 local STAT_DEFS = {
-    { key = "Strength", label = "力量",
-      names = { "Strength", "Power", "Str", "StrengthValue", "力量", "TotalStrength", "CrownStrength" } },
-    { key = "Rebirth", label = "重生",
-      names = { "Rebirth", "Rebirths", "RebirthCount", "RebirthLevel", "重生", "RebirthValue" } },
-    { key = "Gems", label = "宝石",
-      names = { "Gems", "Gem", "GemCount", "Diamonds", "Crystal", "宝石", "Diamond" } },
-    { key = "Agility", label = "敏捷",
-      names = { "Agility", "Speed", "Agil", "AgilityValue", "敏捷", "SpeedValue" } },
+    { key = "Strength", label = "力量", names = { "Strength", "Power", "Str", "StrengthValue", "力量", "TotalStrength", "CrownStrength" } },
+    { key = "Rebirth", label = "重生", names = { "Rebirth", "Rebirths", "RebirthCount", "RebirthLevel", "重生", "RebirthValue" } },
+    { key = "Gems", label = "宝石", names = { "Gems", "Gem", "GemCount", "Diamonds", "Crystal", "宝石", "Diamond" } },
+    { key = "Agility", label = "敏捷", names = { "Agility", "Speed", "Agil", "AgilityValue", "敏捷", "SpeedValue" } },
 }
 
 local statSources = {}
@@ -386,7 +376,6 @@ local function findStat(key)
         if d.key == key then def = d break end
     end
     if not def then return false end
-
     local ls = LP:FindFirstChild("leaderstats")
     if ls then
         for _, n in ipairs(def.names) do
@@ -466,7 +455,6 @@ local function notify(text, color)
     toast.Parent = SG
     corner(toast, 8)
     stroke(toast, color, 1.2, 0.2)
-
     local acc = Instance.new("Frame")
     acc.Size = UDim2.new(0, 3, 0, 20)
     acc.Position = UDim2.new(0, 8, 0.5, -10)
@@ -475,7 +463,6 @@ local function notify(text, color)
     acc.ZIndex = 301
     acc.Parent = toast
     corner(acc, 2)
-
     local lbl = Instance.new("TextLabel")
     lbl.Size = UDim2.new(1, -24, 1, 0)
     lbl.Position = UDim2.new(0, 16, 0, 0)
@@ -487,7 +474,6 @@ local function notify(text, color)
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.ZIndex = 301
     lbl.Parent = toast
-
     TweenService:Create(toast, TweenInfo.new(0.3, Enum.EasingStyle.Back), {
         BackgroundTransparency = 0, Position = UDim2.new(0.5, -110, 0, 20)
     }):Play()
@@ -502,7 +488,6 @@ local function notify(text, color)
 end
 
 local W, H = 500, 320
-
 local Main = Instance.new("Frame")
 Main.Size = UDim2.new(0, W, 0, H)
 Main.Position = UDim2.new(0.5, -W/2, 0.5, -H/2)
@@ -539,7 +524,6 @@ BgGradFill.Color = ColorSequence.new({
 })
 BgGradFill.Rotation = 135
 BgGradFill.Parent = BgGrad
-
 drawLightningField(CatBG, 0.55, 1)
 drawCatFace(CatBG, W / 2, H / 2 + 10, 1.9, 0.72, 2)
 
@@ -613,7 +597,6 @@ end
 
 local CloseBtn = topBtn("×", -44, true)
 local MinBtn = topBtn("−", -84, false)
-
 local Sidebar = Instance.new("Frame")
 Sidebar.Size = UDim2.new(0, 130, 1, -44)
 Sidebar.Position = UDim2.new(0, 0, 0, 44)
@@ -676,18 +659,15 @@ local function makePage(name)
     p.Visible = false
     p.ZIndex = 11
     p.Parent = Content
-
     local pad = Instance.new("UIPadding")
     pad.PaddingTop = UDim.new(0, 14)
     pad.PaddingBottom = UDim.new(0, 14)
     pad.PaddingLeft = UDim.new(0, 14)
     pad.PaddingRight = UDim.new(0, 14)
     pad.Parent = p
-
     local layout = Instance.new("UIListLayout")
     layout.Padding = UDim.new(0, 10)
     layout.Parent = p
-
     pages[name] = p
     return p
 end
@@ -707,7 +687,6 @@ local function makeNavBtn(icon, label, pageName)
     b.ZIndex = 11
     b.Parent = Sidebar
     corner(b, 8)
-
     b.MouseEnter:Connect(function()
         if currentPage ~= pageName then
             TweenService:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = C.cardHover, BackgroundTransparency = 0.15}):Play()
@@ -719,7 +698,6 @@ local function makeNavBtn(icon, label, pageName)
         end
     end)
     b.MouseButton1Click:Connect(function() showPage(pageName) end)
-
     navButtons[pageName] = b
 end
 
@@ -747,18 +725,15 @@ local function makeInfoCard(parent, title, lines)
     card.Parent = parent
     corner(card, 10)
     stroke(card, Color3.fromRGB(60, 80, 110), 1, 0.5)
-
     local pad = Instance.new("UIPadding")
     pad.PaddingTop = UDim.new(0, 12)
     pad.PaddingBottom = UDim.new(0, 12)
     pad.PaddingLeft = UDim.new(0, 14)
     pad.PaddingRight = UDim.new(0, 14)
     pad.Parent = card
-
     local layout = Instance.new("UIListLayout")
     layout.Padding = UDim.new(0, 5)
     layout.Parent = card
-
     local t = Instance.new("TextLabel")
     t.Size = UDim2.new(1, 0, 0, 18)
     t.BackgroundTransparency = 1
@@ -770,7 +745,6 @@ local function makeInfoCard(parent, title, lines)
     t.LayoutOrder = 1
     t.ZIndex = 13
     t.Parent = card
-
     for i, line in ipairs(lines) do
         local l = Instance.new("TextLabel")
         l.Size = UDim2.new(1, 0, 0, 0)
@@ -786,7 +760,6 @@ local function makeInfoCard(parent, title, lines)
         l.ZIndex = 13
         l.Parent = card
     end
-
     return card
 end
 
@@ -799,7 +772,6 @@ local function makeDataRow(parent, label, color)
     r.ZIndex = 13
     r.Parent = parent
     corner(r, 6)
-
     local l = Instance.new("TextLabel")
     l.Size = UDim2.new(0.55, -10, 1, 0)
     l.Position = UDim2.new(0, 10, 0, 0)
@@ -811,7 +783,6 @@ local function makeDataRow(parent, label, color)
     l.TextSize = 11
     l.ZIndex = 14
     l.Parent = r
-
     local v = Instance.new("TextLabel")
     v.Size = UDim2.new(0.45, -10, 1, 0)
     v.Position = UDim2.new(0.55, 0, 0, 0)
@@ -828,7 +799,6 @@ end
 
 local function makeToggle(parent, title, desc, key, onToggle)
     local card = makeCard(parent, desc and 60 or 48)
-
     local t = Instance.new("TextLabel")
     t.Size = UDim2.new(1, -100, 0, 20)
     t.Position = UDim2.new(0, 14, 0, 10)
@@ -840,7 +810,6 @@ local function makeToggle(parent, title, desc, key, onToggle)
     t.TextSize = 13
     t.ZIndex = 13
     t.Parent = card
-
     if desc then
         local d = Instance.new("TextLabel")
         d.Size = UDim2.new(1, -32, 0, 26)
@@ -856,9 +825,7 @@ local function makeToggle(parent, title, desc, key, onToggle)
         d.ZIndex = 13
         d.Parent = card
     end
-
     local on = Config[key] and true or false
-
     local track = Instance.new("Frame")
     track.Size = UDim2.new(0, 40, 0, 22)
     track.Position = UDim2.new(1, -54, 0, 13)
@@ -867,7 +834,6 @@ local function makeToggle(parent, title, desc, key, onToggle)
     track.ZIndex = 13
     track.Parent = card
     corner(track, 11)
-
     local knob = Instance.new("Frame")
     knob.Size = UDim2.new(0, 18, 0, 18)
     knob.Position = on and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)
@@ -876,14 +842,12 @@ local function makeToggle(parent, title, desc, key, onToggle)
     knob.ZIndex = 14
     knob.Parent = track
     corner(knob, 9)
-
     local hit = Instance.new("TextButton")
     hit.Size = UDim2.new(1, 0, 1, 0)
     hit.BackgroundTransparency = 1
     hit.Text = ""
     hit.ZIndex = 15
     hit.Parent = card
-
     hit.MouseButton1Click:Connect(function()
         on = not on
         Config[key] = on
@@ -905,7 +869,6 @@ end
 
 local function makeNumberInput(parent, title, key, minV, maxV, onChange)
     local card = makeCard(parent, 50)
-
     local t = Instance.new("TextLabel")
     t.Size = UDim2.new(0.45, -10, 1, 0)
     t.Position = UDim2.new(0, 14, 0, 0)
@@ -917,7 +880,6 @@ local function makeNumberInput(parent, title, key, minV, maxV, onChange)
     t.TextSize = 12
     t.ZIndex = 13
     t.Parent = card
-
     local box = Instance.new("TextBox")
     box.Size = UDim2.new(0.5, -14, 0, 32)
     box.Position = UDim2.new(0.5, 0, 0.5, -16)
@@ -932,7 +894,6 @@ local function makeNumberInput(parent, title, key, minV, maxV, onChange)
     box.Parent = card
     corner(box, 6)
     stroke(box, Color3.fromRGB(60, 80, 110), 1, 0.5)
-
     box.Focused:Connect(function()
         TweenService:Create(box, TweenInfo.new(0.15), {BackgroundColor3 = C.cardHover}):Play()
     end)
@@ -995,11 +956,9 @@ local flying, flyBV, flyBG = false, nil, nil
 local flySpeed = Config.FlySpeed or 50
 local startAutoTrain, stopAutoTrain, updateStartBtn
 local startFly, stopFly, applyWalkSpeed
-
 local pendingRebirth = false
 local pendingRebirthStart = 0
 local pendingRebirthLastValue = 0
-
 local MobileInput = { Forward = false, Back = false, Left = false, Right = false, Up = false, Down = false }
 
 makeNavBtn("📊", "总览", "overview")
@@ -1009,7 +968,6 @@ makeNavBtn("⚡", "移动", "move")
 makeNavBtn("⚙", "设置", "settings")
 
 local overview = makePage("overview")
-
 local overviewTotalCard = makeCard(overview, 0)
 overviewTotalCard.AutomaticSize = Enum.AutomaticSize.Y
 local overviewTotalLayout = Instance.new("UIListLayout")
@@ -1021,7 +979,6 @@ overviewTotalPad.PaddingBottom = UDim.new(0, 12)
 overviewTotalPad.PaddingLeft = UDim.new(0, 10)
 overviewTotalPad.PaddingRight = UDim.new(0, 10)
 overviewTotalPad.Parent = overviewTotalCard
-
 local overviewTotalTitle = Instance.new("TextLabel")
 overviewTotalTitle.Size = UDim2.new(1, 0, 0, 18)
 overviewTotalTitle.BackgroundTransparency = 1
@@ -1033,16 +990,12 @@ overviewTotalTitle.TextSize = 13
 overviewTotalTitle.LayoutOrder = 1
 overviewTotalTitle.ZIndex = 13
 overviewTotalTitle.Parent = overviewTotalCard
-
 local rowTotalReps = makeDataRow(overviewTotalCard, "总训练次数", C.accent)
 rowTotalReps.Parent.LayoutOrder = 2
-
 local rowTotalRebirth = makeDataRow(overviewTotalCard, "总转生次数", C.accent)
 rowTotalRebirth.Parent.LayoutOrder = 3
-
 local rowTotalTime = makeDataRow(overviewTotalCard, "总运行时长", C.accent)
 rowTotalTime.Parent.LayoutOrder = 4
-
 local overviewDataCard = makeCard(overview, 0)
 overviewDataCard.AutomaticSize = Enum.AutomaticSize.Y
 local overviewDataLayout = Instance.new("UIListLayout")
@@ -1054,7 +1007,6 @@ overviewDataPad.PaddingBottom = UDim.new(0, 12)
 overviewDataPad.PaddingLeft = UDim.new(0, 10)
 overviewDataPad.PaddingRight = UDim.new(0, 10)
 overviewDataPad.Parent = overviewDataCard
-
 local overviewTitle = Instance.new("TextLabel")
 overviewTitle.Size = UDim2.new(1, 0, 0, 18)
 overviewTitle.BackgroundTransparency = 1
@@ -1066,16 +1018,14 @@ overviewTitle.TextSize = 13
 overviewTitle.LayoutOrder = 1
 overviewTitle.ZIndex = 13
 overviewTitle.Parent = overviewDataCard
-
 local rowStrength = makeDataRow(overviewDataCard, "当前力量", C.accent)
 rowStrength.Parent.LayoutOrder = 2
-local rowSession  = makeDataRow(overviewDataCard, "本次增长", C.green)
+local rowSession = makeDataRow(overviewDataCard, "本次增长", C.green)
 rowSession.Parent.LayoutOrder = 3
-local rowBefore   = makeDataRow(overviewDataCard, "训练前", C.textDim)
+local rowBefore = makeDataRow(overviewDataCard, "训练前", C.textDim)
 rowBefore.Parent.LayoutOrder = 4
-local rowPerRep   = makeDataRow(overviewDataCard, "每次增量", C.textDim)
+local rowPerRep = makeDataRow(overviewDataCard, "每次增量", C.textDim)
 rowPerRep.Parent.LayoutOrder = 5
-
 local overviewStatCard = makeCard(overview, 0)
 overviewStatCard.AutomaticSize = Enum.AutomaticSize.Y
 local overviewStatLayout = Instance.new("UIListLayout")
@@ -1087,7 +1037,6 @@ overviewStatPad.PaddingBottom = UDim.new(0, 12)
 overviewStatPad.PaddingLeft = UDim.new(0, 10)
 overviewStatPad.PaddingRight = UDim.new(0, 10)
 overviewStatPad.Parent = overviewStatCard
-
 local overviewStatTitle = Instance.new("TextLabel")
 overviewStatTitle.Size = UDim2.new(1, 0, 0, 18)
 overviewStatTitle.BackgroundTransparency = 1
@@ -1099,7 +1048,6 @@ overviewStatTitle.TextSize = 13
 overviewStatTitle.LayoutOrder = 1
 overviewStatTitle.ZIndex = 13
 overviewStatTitle.Parent = overviewStatCard
-
 local statSession = makeDataRow(overviewStatCard, "本次训练", C.text)
 statSession.Parent.LayoutOrder = 2
 local statTotal = makeDataRow(overviewStatCard, "累计训练", C.text)
@@ -1108,7 +1056,6 @@ local statRate = makeDataRow(overviewStatCard, "每秒平均", C.text)
 statRate.Parent.LayoutOrder = 4
 
 local training = makePage("training")
-
 local actionCard = makeCard(training, 50)
 local actionTitle = Instance.new("TextLabel")
 actionTitle.Size = UDim2.new(0.4, -10, 1, 0)
@@ -1121,7 +1068,6 @@ actionTitle.Font = Enum.Font.GothamBold
 actionTitle.TextSize = 12
 actionTitle.ZIndex = 13
 actionTitle.Parent = actionCard
-
 local actionBtn = Instance.new("TextButton")
 actionBtn.Size = UDim2.new(0.55, -14, 0, 32)
 actionBtn.Position = UDim2.new(0.45, 0, 0.5, -16)
@@ -1136,12 +1082,10 @@ actionBtn.ZIndex = 13
 actionBtn.Parent = actionCard
 corner(actionBtn, 6)
 stroke(actionBtn, Color3.fromRGB(60, 80, 110), 1, 0.5)
-
 local actionIndex = 1
 for i, v in ipairs(Actions) do
     if v == Config.Action then actionIndex = i break end
 end
-
 actionBtn.MouseEnter:Connect(function()
     TweenService:Create(actionBtn, TweenInfo.new(0.15), {BackgroundColor3 = C.cardHover}):Play()
 end)
@@ -1154,11 +1098,8 @@ actionBtn.MouseButton1Click:Connect(function()
     actionBtn.Text = ActionNames[Config.Action] or Config.Action
     saveConfig()
 end)
-
 makeNumberInput(training, "训练间隔", "Interval", MIN_INTERVAL, MAX_INTERVAL, nil)
-
 local startBtn = makeAction(training, "▶  开始训练", C.green, nil)
-
 updateStartBtn = function()
     if isTraining then
         startBtn.Text = "■  停止训练"
@@ -1170,11 +1111,9 @@ updateStartBtn = function()
 end
 
 local rebirth = makePage("rebirth")
-
 makeToggle(rebirth, "自动重生", "达到重生门槛后自动发送 RebirthEvent", "AutoRebirth")
 makeToggle(rebirth, "反挂机", "防止因长时间无操作被踢出", "AntiAfk")
 makeToggle(rebirth, "自动重置", "定时重置角色", "AutoReset")
-
 local countCard = makeCard(rebirth, 70)
 local countTitle = Instance.new("TextLabel")
 countTitle.Size = UDim2.new(1, -28, 0, 18)
@@ -1187,7 +1126,6 @@ countTitle.Font = Enum.Font.GothamBold
 countTitle.TextSize = 12
 countTitle.ZIndex = 13
 countTitle.Parent = countCard
-
 local minusBtn = Instance.new("TextButton")
 minusBtn.Size = UDim2.new(0, 30, 0, 28)
 minusBtn.Position = UDim2.new(0, 14, 0, 32)
@@ -1201,7 +1139,6 @@ minusBtn.BorderSizePixel = 0
 minusBtn.ZIndex = 13
 minusBtn.Parent = countCard
 corner(minusBtn, 6)
-
 local countBox = Instance.new("TextBox")
 countBox.Size = UDim2.new(1, -92, 0, 28)
 countBox.Position = UDim2.new(0, 48, 0, 32)
@@ -1216,7 +1153,6 @@ countBox.ZIndex = 13
 countBox.Parent = countCard
 corner(countBox, 6)
 stroke(countBox, Color3.fromRGB(60, 80, 110), 1, 0.5)
-
 local plusBtn = Instance.new("TextButton")
 plusBtn.Size = UDim2.new(0, 30, 0, 28)
 plusBtn.Position = UDim2.new(1, -44, 0, 32)
@@ -1230,9 +1166,7 @@ plusBtn.BorderSizePixel = 0
 plusBtn.ZIndex = 13
 plusBtn.Parent = countCard
 corner(plusBtn, 6)
-
 local updateRebirthDisplay
-
 local function commitCount(n)
     n = math.clamp(math.floor(tonumber(n) or 0), 0, 99999)
     Config.AutoRebirthCount = n
@@ -1240,7 +1174,6 @@ local function commitCount(n)
     saveConfig()
     if updateRebirthDisplay then updateRebirthDisplay() end
 end
-
 minusBtn.MouseButton1Click:Connect(function()
     local step = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) and 10 or 1
     commitCount(Config.AutoRebirthCount - step)
@@ -1258,7 +1191,6 @@ countBox.FocusLost:Connect(function()
         notify("范围 0 ~ 99999", C.red)
     end
 end)
-
 local progressCard = makeCard(rebirth, 70)
 local progressTitle = Instance.new("TextLabel")
 progressTitle.Size = UDim2.new(1, -28, 0, 18)
@@ -1271,7 +1203,6 @@ progressTitle.Font = Enum.Font.GothamBold
 progressTitle.TextSize = 12
 progressTitle.ZIndex = 13
 progressTitle.Parent = progressCard
-
 local doneLbl = Instance.new("TextLabel")
 doneLbl.Size = UDim2.new(0.5, 0, 0, 24)
 doneLbl.Position = UDim2.new(0, 14, 0, 32)
@@ -1283,7 +1214,6 @@ doneLbl.Font = Enum.Font.GothamBold
 doneLbl.TextSize = 16
 doneLbl.ZIndex = 13
 doneLbl.Parent = progressCard
-
 local targetLbl = Instance.new("TextLabel")
 targetLbl.Size = UDim2.new(0.5, -14, 0, 24)
 targetLbl.Position = UDim2.new(0.5, 0, 0, 32)
@@ -1295,7 +1225,6 @@ targetLbl.Font = Enum.Font.GothamBold
 targetLbl.TextSize = 16
 targetLbl.ZIndex = 13
 targetLbl.Parent = progressCard
-
 updateRebirthDisplay = function()
     doneLbl.Text = tostring(Config.AutoRebirthDone)
     if Config.AutoRebirthCount == 0 then
@@ -1305,7 +1234,6 @@ updateRebirthDisplay = function()
     end
 end
 updateRebirthDisplay()
-
 makeAction(rebirth, "重置计数", C.card, function()
     Config.AutoRebirthDone = 0
     saveConfig()
@@ -1314,7 +1242,6 @@ makeAction(rebirth, "重置计数", C.card, function()
 end)
 
 local move = makePage("move")
-
 makeToggle(move, "飞行模式", "开启后可自由飞行", "Fly", function(on)
     if on then
         startFly()
@@ -1328,21 +1255,17 @@ makeToggle(move, "飞行模式", "开启后可自由飞行", "Fly", function(on)
         notify("飞行关闭", C.red)
     end
 end)
-
 makeNumberInput(move, "步行速度", "WalkSpeed", 16, 500, function(v)
     Config.WalkSpeed = v
     applyWalkSpeed()
 end)
-
 makeNumberInput(move, "飞行速度", "FlySpeed", 10, 500, function(v)
     flySpeed = v
 end)
 
 local settings = makePage("settings")
-
 makeToggle(settings, "通知提示", "打开或关闭所有通知弹窗", "Notifications")
 makeToggle(settings, "自动启动", "打开后游戏启动时自动开始训练", "AutoStart")
-
 makeAction(settings, "重置所有设置", C.red, function()
     Config.Interval = 0.1
     Config.WalkSpeed = 16
@@ -1353,7 +1276,6 @@ makeAction(settings, "重置所有设置", C.red, function()
     saveConfig()
     notify("已重置设置", C.accent)
 end)
-
 makeInfoCard(settings, "力量之冠封存 v1.0", {
     "基于 WindUI 风格的手机布局",
     "支持触控和实时数据刷新",
@@ -1372,7 +1294,6 @@ DataHUD.ZIndex = 500
 DataHUD.Parent = SG
 corner(DataHUD, 10)
 stroke(DataHUD, C.accent, 1.5, 0.2)
-
 local HUDTitle = Instance.new("TextLabel")
 HUDTitle.Size = UDim2.new(1, 0, 0, 24)
 HUDTitle.BackgroundTransparency = 1
@@ -1382,7 +1303,6 @@ HUDTitle.Font = Enum.Font.GothamBold
 HUDTitle.TextSize = 12
 HUDTitle.ZIndex = 501
 HUDTitle.Parent = DataHUD
-
 local LabelReps = Instance.new("TextLabel")
 LabelReps.Size = UDim2.new(0.5, -10, 0, 18)
 LabelReps.Position = UDim2.new(0, 10, 0, 30)
@@ -1394,7 +1314,6 @@ LabelReps.TextSize = 11
 LabelReps.TextXAlignment = Enum.TextXAlignment.Left
 LabelReps.ZIndex = 501
 LabelReps.Parent = DataHUD
-
 local LabelRebirth = Instance.new("TextLabel")
 LabelRebirth.Size = UDim2.new(0.5, -10, 0, 18)
 LabelRebirth.Position = UDim2.new(0, 10, 0, 50)
@@ -1406,7 +1325,6 @@ LabelRebirth.TextSize = 11
 LabelRebirth.TextXAlignment = Enum.TextXAlignment.Left
 LabelRebirth.ZIndex = 501
 LabelRebirth.Parent = DataHUD
-
 local LabelTime = Instance.new("TextLabel")
 LabelTime.Size = UDim2.new(1, -20, 0, 18)
 LabelTime.Position = UDim2.new(0, 10, 0, 70)
@@ -1418,7 +1336,6 @@ LabelTime.TextSize = 11
 LabelTime.TextXAlignment = Enum.TextXAlignment.Left
 LabelTime.ZIndex = 501
 LabelTime.Parent = DataHUD
-
 local HUDDrag, HUDStart, HUDOrigin = false, nil, nil
 DataHUD.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -1440,29 +1357,20 @@ end)
 local mainDrag = false
 local mainStart = nil
 local mainOrigin = nil
-
 TopBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         mainDrag = true
         mainStart = input.Position
         mainOrigin = Main.Position
         input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                mainDrag = false
-            end
+            if input.UserInputState == Enum.UserInputState.End then mainDrag = false end
         end)
     end
 end)
-
 UserInputService.InputChanged:Connect(function(input)
-    if mainDrag and (input.UserInputType == Enum.UserInputType.MouseMovement
-        or input.UserInputType == Enum.UserInputType.Touch) then
+    if mainDrag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         local delta = input.Position - mainStart
-        Main.Position = UDim2.new(
-            mainOrigin.X.Scale, mainOrigin.X.Offset + delta.X,
-            mainOrigin.Y.Scale, mainOrigin.Y.Offset + delta.Y
-        )
+        Main.Position = UDim2.new(mainOrigin.X.Scale, mainOrigin.X.Offset + delta.X, mainOrigin.Y.Scale, mainOrigin.Y.Offset + delta.Y)
     end
 end)
 
@@ -1479,7 +1387,6 @@ MiniBar.ZIndex = 100
 MiniBar.Parent = SG
 corner(MiniBar, 21)
 stroke(MiniBar, Color3.fromRGB(80, 150, 220), 1.2, 0.3)
-
 local MiniCat = Instance.new("Frame")
 MiniCat.Size = UDim2.new(0, 30, 0, 30)
 MiniCat.Position = UDim2.new(0, 8, 0.5, -15)
@@ -1487,7 +1394,6 @@ MiniCat.BackgroundTransparency = 1
 MiniCat.ZIndex = 101
 MiniCat.Parent = MiniBar
 drawCatFace(MiniCat, 15, 15, 0.28, 0, 102)
-
 local miniText = Instance.new("TextLabel")
 miniText.Size = UDim2.new(1, -50, 1, 0)
 miniText.Position = UDim2.new(0, 46, 0, 0)
@@ -1499,15 +1405,12 @@ miniText.TextSize = 14
 miniText.TextXAlignment = Enum.TextXAlignment.Left
 miniText.ZIndex = 101
 miniText.Parent = MiniBar
-
 local miniDrag = false
 local miniMoved = false
 local miniStart = nil
 local miniOrigin = nil
-
 MiniBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         miniDrag = true
         miniMoved = false
         miniStart = input.Position
@@ -1527,21 +1430,13 @@ MiniBar.InputBegan:Connect(function(input)
         end)
     end
 end)
-
 UserInputService.InputChanged:Connect(function(input)
-    if miniDrag and (input.UserInputType == Enum.UserInputType.MouseMovement
-        or input.UserInputType == Enum.UserInputType.Touch) then
+    if miniDrag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         local delta = input.Position - miniStart
-        if math.abs(delta.X) > 3 or math.abs(delta.Y) > 3 then
-            miniMoved = true
-        end
-        MiniBar.Position = UDim2.new(
-            miniOrigin.X.Scale, miniOrigin.X.Offset + delta.X,
-            miniOrigin.Y.Scale, miniOrigin.Y.Offset + delta.Y
-        )
+        if math.abs(delta.X) > 3 or math.abs(delta.Y) > 3 then miniMoved = true end
+        MiniBar.Position = UDim2.new(miniOrigin.X.Scale, miniOrigin.X.Offset + delta.X, miniOrigin.Y.Scale, miniOrigin.Y.Offset + delta.Y)
     end
 end)
-
 MinBtn.MouseButton1Click:Connect(function()
     Main.Visible = false
     MiniBar.Visible = true
@@ -1555,7 +1450,6 @@ ConfirmOverlay.BorderSizePixel = 0
 ConfirmOverlay.Visible = false
 ConfirmOverlay.ZIndex = 200
 ConfirmOverlay.Parent = Main
-
 local ConfirmBox = Instance.new("Frame")
 ConfirmBox.Size = UDim2.new(0, 360, 0, 180)
 ConfirmBox.Position = UDim2.new(0.5, -180, 0.5, -90)
@@ -1565,7 +1459,6 @@ ConfirmBox.ZIndex = 201
 ConfirmBox.Parent = ConfirmOverlay
 corner(ConfirmBox, 14)
 stroke(ConfirmBox, Color3.fromRGB(80, 100, 130), 1, 0.3)
-
 local ConfirmTitle = Instance.new("TextLabel")
 ConfirmTitle.Size = UDim2.new(1, -32, 0, 30)
 ConfirmTitle.Position = UDim2.new(0, 20, 0, 22)
@@ -1577,7 +1470,6 @@ ConfirmTitle.Font = Enum.Font.GothamBold
 ConfirmTitle.TextSize = 18
 ConfirmTitle.ZIndex = 202
 ConfirmTitle.Parent = ConfirmBox
-
 local ConfirmDesc = Instance.new("TextLabel")
 ConfirmDesc.Size = UDim2.new(1, -32, 0, 50)
 ConfirmDesc.Position = UDim2.new(0, 20, 0, 60)
@@ -1591,7 +1483,6 @@ ConfirmDesc.Font = Enum.Font.Gotham
 ConfirmDesc.TextSize = 12
 ConfirmDesc.ZIndex = 202
 ConfirmDesc.Parent = ConfirmBox
-
 local function confirmBtn(text, x, w, color)
     local b = Instance.new("TextButton")
     b.Size = UDim2.new(0, w, 0, 36)
@@ -1608,19 +1499,11 @@ local function confirmBtn(text, x, w, color)
     corner(b, 8)
     return b
 end
-
 local CancelBtn = confirmBtn("点错了", -284, 130, Color3.fromRGB(70, 70, 80))
 local CloseConfirmBtn = confirmBtn("关闭", -144, 130, Color3.fromRGB(200, 60, 70))
-
-CancelBtn.MouseButton1Click:Connect(function()
-    ConfirmOverlay.Visible = false
-end)
-CloseConfirmBtn.MouseButton1Click:Connect(function()
-    SG:Destroy()
-end)
-CloseBtn.MouseButton1Click:Connect(function()
-    ConfirmOverlay.Visible = true
-end)
+CancelBtn.MouseButton1Click:Connect(function() ConfirmOverlay.Visible = false end)
+CloseConfirmBtn.MouseButton1Click:Connect(function() SG:Destroy() end)
+CloseBtn.MouseButton1Click:Connect(function() ConfirmOverlay.Visible = true end)
 
 startAutoTrain = function()
     if isTraining then return end
@@ -1629,9 +1512,7 @@ startAutoTrain = function()
     trainCount = 0
     startTime = tick()
     refreshAllStats()
-    if hasStatSource("Strength") then
-        sessionStartStrength = getStat("Strength")
-    end
+    if hasStatSource("Strength") then sessionStartStrength = getStat("Strength") end
     trainThread = task.spawn(function()
         while isTraining and SG.Parent do
             local ok = pcall(function() TrainEvent:FireServer(Config.Action) end)
@@ -1646,7 +1527,6 @@ startAutoTrain = function()
     end)
     updateStartBtn()
 end
-
 stopAutoTrain = function()
     if not isTraining then return end
     isTraining = false
@@ -1657,7 +1537,6 @@ stopAutoTrain = function()
     saveConfig()
     updateStartBtn()
 end
-
 startBtn.MouseButton1Click:Connect(function()
     if isTraining then
         stopAutoTrain()
@@ -1668,14 +1547,12 @@ startBtn.MouseButton1Click:Connect(function()
     end
     updateStartBtn()
 end)
-
 applyWalkSpeed = function()
     local char = LP.Character
     if not char then return end
     local hum = char:FindFirstChildOfClass("Humanoid")
     if hum then hum.WalkSpeed = Config.WalkSpeed end
 end
-
 local FlyControls = Instance.new("Frame")
 FlyControls.Size = UDim2.new(0, 170, 0, 104)
 FlyControls.Position = UDim2.new(0.5, -85, 1, -120)
@@ -1686,7 +1563,6 @@ FlyControls.ZIndex = 30
 FlyControls.Parent = SG
 corner(FlyControls, 8)
 stroke(FlyControls, C.accent, 1.2, 0.3)
-
 local function flyButton(text, x, y, color)
     local b = Instance.new("TextButton")
     b.Size = UDim2.new(0, 34, 0, 34)
@@ -1703,14 +1579,12 @@ local function flyButton(text, x, y, color)
     corner(b, 6)
     return b
 end
-
-local BtnUp    = flyButton("▲", 42, 4, C.accent)
-local BtnDown  = flyButton("▼", 42, 66, Color3.fromRGB(180, 120, 255))
-local BtnLeft  = flyButton("◀", 4, 35, C.accent)
+local BtnUp = flyButton("▲", 42, 4, C.accent)
+local BtnDown = flyButton("▼", 42, 66, Color3.fromRGB(180, 120, 255))
+local BtnLeft = flyButton("◀", 4, 35, C.accent)
 local BtnRight = flyButton("▶", 80, 35, C.accent)
-local BtnRise  = flyButton("＋", 118, 4, C.green)
-local BtnFall  = flyButton("－", 118, 66, C.red)
-
+local BtnRise = flyButton("＋", 118, 4, C.green)
+local BtnFall = flyButton("－", 118, 66, C.red)
 local function bindHold(btn, key)
     local function set(v)
         MobileInput[key] = v
@@ -1720,14 +1594,12 @@ local function bindHold(btn, key)
     btn.MouseButton1Up:Connect(function() set(false) end)
     btn.MouseLeave:Connect(function() set(false) end)
 end
-
 bindHold(BtnUp, "Forward")
 bindHold(BtnDown, "Back")
 bindHold(BtnLeft, "Left")
 bindHold(BtnRight, "Right")
 bindHold(BtnRise, "Up")
 bindHold(BtnFall, "Down")
-
 startFly = function()
     if flying then return end
     local char = LP.Character
@@ -1736,21 +1608,17 @@ startFly = function()
     if not hrp then return end
     local hum = char:FindFirstChildOfClass("Humanoid")
     if hum then hum.PlatformStand = true end
-
     flyBV = Instance.new("BodyVelocity")
     flyBV.MaxForce = Vector3.new(1e5, 1e5, 1e5)
     flyBV.Velocity = Vector3.zero
     flyBV.Parent = hrp
-
     flyBG = Instance.new("BodyGyro")
     flyBG.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
     flyBG.P = 3000
     flyBG.D = 500
     flyBG.Parent = hrp
-
     flying = true
 end
-
 stopFly = function()
     if not flying then return end
     flying = false
@@ -1764,36 +1632,30 @@ stopFly = function()
     if flyBG then flyBG:Destroy(); flyBG = nil end
     applyWalkSpeed()
 end
-
 RunService.RenderStepped:Connect(function()
     if not flying then return end
     local char = LP.Character
     if not char then stopFly() return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp or not flyBV or not flyBG then return end
-
     local cam = workspace.CurrentCamera
     local dir = Vector3.zero
-
     local fwd = UserInputService:IsKeyDown(Enum.KeyCode.W) or MobileInput.Forward
     local bck = UserInputService:IsKeyDown(Enum.KeyCode.S) or MobileInput.Back
     local lft = UserInputService:IsKeyDown(Enum.KeyCode.A) or MobileInput.Left
     local rgt = UserInputService:IsKeyDown(Enum.KeyCode.D) or MobileInput.Right
-    local up  = UserInputService:IsKeyDown(Enum.KeyCode.Space) or MobileInput.Up
-    local dn  = UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or MobileInput.Down
-
+    local up = UserInputService:IsKeyDown(Enum.KeyCode.Space) or MobileInput.Up
+    local dn = UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or MobileInput.Down
     if fwd then dir = dir + cam.CFrame.LookVector end
     if bck then dir = dir - cam.CFrame.LookVector end
     if lft then dir = dir - cam.CFrame.RightVector end
     if rgt then dir = dir + cam.CFrame.RightVector end
-    if up  then dir = dir + Vector3.new(0, 1, 0) end
-    if dn  then dir = dir - Vector3.new(0, 1, 0) end
-
+    if up then dir = dir + Vector3.new(0, 1, 0) end
+    if dn then dir = dir - Vector3.new(0, 1, 0) end
     if dir.Magnitude > 0 then dir = dir.Unit * flySpeed end
     flyBV.Velocity = dir
     flyBG.CFrame = CFrame.new(hrp.Position, hrp.Position + cam.CFrame.LookVector)
 end)
-
 LP.CharacterAdded:Connect(function(char)
     task.wait(0.5)
     applyWalkSpeed()
@@ -1812,36 +1674,29 @@ task.spawn(function()
         statSession.Text = tostring(trainCount)
         statTotal.Text = tostring(totalCount)
         statRate.Text = string.format("%.2f", aps)
-
         rowTotalReps.Text = fmt(totalCount)
         rowTotalRebirth.Text = fmt(Config.AutoRebirthDone)
-        
         local elapsedTime = tick() - ScriptStartTime
         local hours = math.floor(elapsedTime / 3600)
         local mins = math.floor((elapsedTime % 3600) / 60)
         local secs = math.floor(elapsedTime % 60)
         rowTotalTime.Text = string.format("%02d:%02d:%02d", hours, mins, secs)
-
         LabelReps.Text = "总训练: " .. fmt(totalCount)
         LabelRebirth.Text = "总转生: " .. fmt(Config.AutoRebirthDone)
         LabelTime.Text = "总时长: " .. string.format("%02d:%02d:%02d", hours, mins, secs)
-
         refreshAllStats()
         local curStrength = getStat("Strength")
         if sessionStartStrength == nil then sessionStartStrength = curStrength end
         local gain = curStrength - sessionStartStrength
-
         rowStrength.Text = fmt(curStrength)
         rowSession.Text = (gain >= 0 and "+" or "") .. fmt(gain)
         rowBefore.Text = fmt(sessionStartStrength)
         rowSession.TextColor3 = gain > 0 and C.green or (gain < 0 and C.red or C.text)
-
         if trainCount > 0 and gain > 0 then
             rowPerRep.Text = string.format("%.2f", gain / trainCount)
         else
             rowPerRep.Text = "—"
         end
-
         task.wait(0.5)
     end
 end)
@@ -1859,16 +1714,13 @@ local function fireAntiAfk()
         if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
     end)
 end
-
 LP.Idled:Connect(fireAntiAfk)
-
 task.spawn(function()
     while SG.Parent do
         task.wait(60)
         if Config.AntiAfk then fireAntiAfk() end
     end
 end)
-
 task.spawn(function()
     while SG.Parent do
         task.wait(0.5)
@@ -1891,14 +1743,12 @@ task.spawn(function()
         end
     end
 end)
-
 task.spawn(function()
     while SG.Parent do
         task.wait(Config.AutoRebirthDelay)
         if Config.AutoRebirth and RebirthEvent and not pendingRebirth then
             local target = Config.AutoRebirthCount
             local done = Config.AutoRebirthDone
-
             if target > 0 and done >= target then
                 Config.AutoRebirth = false
                 saveConfig()
@@ -1923,7 +1773,6 @@ task.spawn(function()
         end
     end
 end)
-
 task.spawn(function()
     while SG.Parent do
         task.wait(Config.AutoResetInterval)
@@ -1938,7 +1787,6 @@ task.spawn(function()
         end
     end
 end)
-
 UserInputService.InputBegan:Connect(function(input, processed)
     if processed then return end
     if input.KeyCode == Enum.KeyCode.Insert then
@@ -1954,27 +1802,20 @@ UserInputService.InputBegan:Connect(function(input, processed)
         updateStartBtn()
     end
 end)
-
 updateStartBtn()
 refreshAllStats()
 applyWalkSpeed()
-
 if Config.AutoStart then
     startAutoTrain()
     updateStartBtn()
 end
-
 if Config.Fly then
-    task.defer(function()
-        startFly()
-    end)
+    task.defer(function() startFly() end)
 end
-
 if Config.MinimizeOnStart then
     task.defer(function()
         Main.Visible = false
         MiniBar.Visible = true
     end)
 end
-
 notify("力量之冠封存 — 已启动", C.accent)
