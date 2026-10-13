@@ -24,7 +24,7 @@ local CONFIG_FILE = "CrownStrength_config.json"
 local MIN_INTERVAL, MAX_INTERVAL = 0.08, 10
 local IS_TOUCH = UserInputService.TouchEnabled
 local REBIRTH_TIMEOUT = 15
-local ScriptStartTime = tick() -- 记录脚本启动时间，用于计算总运行时长
+local ScriptStartTime = tick()
 
 local function findRemote(name, alt)
     local list = { ReplicatedStorage }
@@ -1011,6 +1011,39 @@ makeNavBtn("⚙", "设置", "settings")
 
 local overview = makePage("overview")
 
+local overviewTotalCard = makeCard(overview, 0)
+overviewTotalCard.AutomaticSize = Enum.AutomaticSize.Y
+local overviewTotalLayout = Instance.new("UIListLayout")
+overviewTotalLayout.Padding = UDim.new(0, 6)
+overviewTotalLayout.Parent = overviewTotalCard
+local overviewTotalPad = Instance.new("UIPadding")
+overviewTotalPad.PaddingTop = UDim.new(0, 12)
+overviewTotalPad.PaddingBottom = UDim.new(0, 12)
+overviewTotalPad.PaddingLeft = UDim.new(0, 10)
+overviewTotalPad.PaddingRight = UDim.new(0, 10)
+overviewTotalPad.Parent = overviewTotalCard
+
+local overviewTotalTitle = Instance.new("TextLabel")
+overviewTotalTitle.Size = UDim2.new(1, 0, 0, 18)
+overviewTotalTitle.BackgroundTransparency = 1
+overviewTotalTitle.Text = "📊 累计总数据"
+overviewTotalTitle.TextColor3 = C.accent
+overviewTotalTitle.TextXAlignment = Enum.TextXAlignment.Left
+overviewTotalTitle.Font = Enum.Font.GothamBold
+overviewTotalTitle.TextSize = 13
+overviewTotalTitle.LayoutOrder = 1
+overviewTotalTitle.ZIndex = 13
+overviewTotalTitle.Parent = overviewTotalCard
+
+local rowTotalReps = makeDataRow(overviewTotalCard, "总训练次数", C.accent)
+rowTotalReps.Parent.LayoutOrder = 2
+
+local rowTotalRebirth = makeDataRow(overviewTotalCard, "总转生次数", C.accent)
+rowTotalRebirth.Parent.LayoutOrder = 3
+
+local rowTotalTime = makeDataRow(overviewTotalCard, "总运行时长", C.accent)
+rowTotalTime.Parent.LayoutOrder = 4
+
 local overviewDataCard = makeCard(overview, 0)
 overviewDataCard.AutomaticSize = Enum.AutomaticSize.Y
 local overviewDataLayout = Instance.new("UIListLayout")
@@ -1074,41 +1107,6 @@ local statTotal = makeDataRow(overviewStatCard, "累计训练", C.text)
 statTotal.Parent.LayoutOrder = 3
 local statRate = makeDataRow(overviewStatCard, "每秒平均", C.text)
 statRate.Parent.LayoutOrder = 4
-
--- ================== 新增：累计总数据卡片 ==================
-local overviewTotalCard = makeCard(overview, 0)
-overviewTotalCard.AutomaticSize = Enum.AutomaticSize.Y
-local overviewTotalLayout = Instance.new("UIListLayout")
-overviewTotalLayout.Padding = UDim.new(0, 6)
-overviewTotalLayout.Parent = overviewTotalCard
-local overviewTotalPad = Instance.new("UIPadding")
-overviewTotalPad.PaddingTop = UDim.new(0, 12)
-overviewTotalPad.PaddingBottom = UDim.new(0, 12)
-overviewTotalPad.PaddingLeft = UDim.new(0, 10)
-overviewTotalPad.PaddingRight = UDim.new(0, 10)
-overviewTotalPad.Parent = overviewTotalCard
-
-local overviewTotalTitle = Instance.new("TextLabel")
-overviewTotalTitle.Size = UDim2.new(1, 0, 0, 18)
-overviewTotalTitle.BackgroundTransparency = 1
-overviewTotalTitle.Text = "📊 累计总数据"
-overviewTotalTitle.TextColor3 = C.accent -- 蓝色主题
-overviewTotalTitle.TextXAlignment = Enum.TextXAlignment.Left
-overviewTotalTitle.Font = Enum.Font.GothamBold
-overviewTotalTitle.TextSize = 13
-overviewTotalTitle.LayoutOrder = 1
-overviewTotalTitle.ZIndex = 13
-overviewTotalTitle.Parent = overviewTotalCard
-
-local rowTotalReps = makeDataRow(overviewTotalCard, "总训练次数", C.accent)
-rowTotalReps.Parent.LayoutOrder = 2
-
-local rowTotalRebirth = makeDataRow(overviewTotalCard, "总转生次数", C.accent)
-rowTotalRebirth.Parent.LayoutOrder = 3
-
-local rowTotalTime = makeDataRow(overviewTotalCard, "总运行时长", C.accent)
-rowTotalTime.Parent.LayoutOrder = 4
--- =======================================================
 
 local training = makePage("training")
 
@@ -1741,17 +1739,14 @@ task.spawn(function()
         statTotal.Text = tostring(totalCount)
         statRate.Text = string.format("%.2f", aps)
 
-        -- ============ 更新总数据 ============
         rowTotalReps.Text = fmt(totalCount)
         rowTotalRebirth.Text = fmt(Config.AutoRebirthDone)
         
-        -- 计算总运行时长
         local elapsedTime = tick() - ScriptStartTime
         local hours = math.floor(elapsedTime / 3600)
         local mins = math.floor((elapsedTime % 3600) / 60)
         local secs = math.floor(elapsedTime % 60)
         rowTotalTime.Text = string.format("%02d:%02d:%02d", hours, mins, secs)
-        -- ====================================
 
         refreshAllStats()
         local curStrength = getStat("Strength")
