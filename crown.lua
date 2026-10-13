@@ -1,5 +1,3 @@
-local IMG = "rbxassetid://YOUR_ID_HERE"
-
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -50,7 +48,121 @@ local function stroke(p, c, t, tr)
     return s
 end
 
-local W, H = 500, 420
+local function makeCatIcon(parent, size, zIndex)
+    local box = Instance.new("Frame")
+    box.Size = UDim2.new(0, size, 0, size)
+    box.BackgroundTransparency = 1
+    box.ZIndex = zIndex or 3
+    box.Parent = parent
+
+    local glow = Instance.new("Frame")
+    glow.Size = UDim2.new(1, 6, 1, 6)
+    glow.Position = UDim2.new(0, -3, 0, -3)
+    glow.BackgroundColor3 = Color3.fromRGB(80, 180, 255)
+    glow.BackgroundTransparency = 0.6
+    glow.BorderSizePixel = 0
+    glow.ZIndex = (zIndex or 3) - 1
+    glow.Parent = box
+    corner(glow, size)
+
+    local head = Instance.new("Frame")
+    head.Size = UDim2.new(1, 0, 1, 0)
+    head.BackgroundColor3 = Color3.fromRGB(30, 35, 45)
+    head.BorderSizePixel = 0
+    head.ZIndex = zIndex or 3
+    head.Parent = box
+    corner(head, size / 2)
+    stroke(head, Color3.fromRGB(120, 200, 255), 1, 0.3)
+
+    local earL = Instance.new("Frame")
+    earL.Size = UDim2.new(0, size * 0.28, 0, size * 0.28)
+    earL.Position = UDim2.new(0, size * 0.08, 0, -size * 0.1)
+    earL.BackgroundColor3 = Color3.fromRGB(30, 35, 45)
+    earL.BorderSizePixel = 0
+    earL.ZIndex = zIndex or 3
+    earL.Parent = box
+    corner(earL, 3)
+
+    local earR = Instance.new("Frame")
+    earR.Size = UDim2.new(0, size * 0.28, 0, size * 0.28)
+    earR.Position = UDim2.new(1, -size * 0.36, 0, -size * 0.1)
+    earR.BackgroundColor3 = Color3.fromRGB(30, 35, 45)
+    earR.BorderSizePixel = 0
+    earR.ZIndex = zIndex or 3
+    earR.Parent = box
+    corner(earR, 3)
+
+    local eyeLGlow = Instance.new("Frame")
+    eyeLGlow.Size = UDim2.new(0, size * 0.28, 0, size * 0.22)
+    eyeLGlow.Position = UDim2.new(0, size * 0.2, 0.5, -size * 0.18)
+    eyeLGlow.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+    eyeLGlow.BackgroundTransparency = 0.4
+    eyeLGlow.BorderSizePixel = 0
+    eyeLGlow.ZIndex = zIndex or 3
+    eyeLGlow.Parent = box
+    corner(eyeLGlow, size / 4)
+
+    local eyeL = Instance.new("Frame")
+    eyeL.Size = UDim2.new(0, size * 0.2, 0, size * 0.14)
+    eyeL.Position = UDim2.new(0, size * 0.24, 0.5, -size * 0.14)
+    eyeL.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    eyeL.BorderSizePixel = 0
+    eyeL.ZIndex = (zIndex or 3) + 1
+    eyeL.Parent = box
+    corner(eyeL, size / 4)
+
+    local eyeRGlow = Instance.new("Frame")
+    eyeRGlow.Size = UDim2.new(0, size * 0.28, 0, size * 0.22)
+    eyeRGlow.Position = UDim2.new(1, -size * 0.48, 0.5, -size * 0.18)
+    eyeRGlow.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+    eyeRGlow.BackgroundTransparency = 0.4
+    eyeRGlow.BorderSizePixel = 0
+    eyeRGlow.ZIndex = zIndex or 3
+    eyeRGlow.Parent = box
+    corner(eyeRGlow, size / 4)
+
+    local eyeR = Instance.new("Frame")
+    eyeR.Size = UDim2.new(0, size * 0.2, 0, size * 0.14)
+    eyeR.Position = UDim2.new(1, -size * 0.44, 0.5, -size * 0.14)
+    eyeR.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    eyeR.BorderSizePixel = 0
+    eyeR.ZIndex = (zIndex or 3) + 1
+    eyeR.Parent = box
+    corner(eyeR, size / 4)
+
+    local nose = Instance.new("Frame")
+    nose.Size = UDim2.new(0, size * 0.1, 0, size * 0.08)
+    nose.Position = UDim2.new(0.5, -size * 0.05, 0.5, size * 0.05)
+    nose.BackgroundColor3 = Color3.fromRGB(180, 130, 100)
+    nose.BorderSizePixel = 0
+    nose.ZIndex = (zIndex or 3) + 1
+    nose.Parent = box
+    corner(nose, 2)
+
+    local bolt = Instance.new("Frame")
+    bolt.Size = UDim2.new(0, size * 0.12, 0, size * 0.5)
+    bolt.Position = UDim2.new(0.5, -size * 0.06, 1, -size * 0.15)
+    bolt.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
+    bolt.BorderSizePixel = 0
+    bolt.Rotation = 25
+    bolt.ZIndex = (zIndex or 3) - 1
+    bolt.Parent = box
+    corner(bolt, 2)
+
+    local bolt2 = Instance.new("Frame")
+    bolt2.Size = UDim2.new(0, size * 0.12, 0, size * 0.5)
+    bolt2.Position = UDim2.new(0.5, -size * 0.06, 1, -size * 0.15)
+    bolt2.BackgroundColor3 = Color3.fromRGB(160, 230, 255)
+    bolt2.BorderSizePixel = 0
+    bolt2.Rotation = -25
+    bolt2.ZIndex = (zIndex or 3) - 1
+    bolt2.Parent = box
+    corner(bolt2, 2)
+
+    return box
+end
+
+local W, H = 500, 320
 
 local Main = Instance.new("Frame")
 Main.Size = UDim2.new(0, W, 0, H)
@@ -70,15 +182,13 @@ TopBar.BorderSizePixel = 0
 TopBar.ZIndex = 2
 TopBar.Parent = Main
 
--- 装饰 1：TopBar 左侧 logo
-local TopLogo = Instance.new("ImageLabel")
-TopLogo.Size = UDim2.new(0, 24, 0, 24)
-TopLogo.Position = UDim2.new(0, 14, 0.5, -12)
+local TopLogo = Instance.new("Frame")
+TopLogo.Size = UDim2.new(0, 28, 0, 28)
+TopLogo.Position = UDim2.new(0, 12, 0.5, -14)
 TopLogo.BackgroundTransparency = 1
-TopLogo.Image = IMG
 TopLogo.ZIndex = 3
 TopLogo.Parent = TopBar
-corner(TopLogo, 5)
+makeCatIcon(TopLogo, 28, 4)
 
 local TopTitle = Instance.new("TextLabel")
 TopTitle.Size = UDim2.new(0, 260, 1, 0)
@@ -104,16 +214,13 @@ TopSub.TextSize = 10
 TopSub.ZIndex = 3
 TopSub.Parent = TopBar
 
--- 装饰 2：TopBar 右侧
-local TopDeco = Instance.new("ImageLabel")
-TopDeco.Size = UDim2.new(0, 80, 0, 36)
-TopDeco.Position = UDim2.new(1, -160, 0.5, -18)
+local TopDeco = Instance.new("Frame")
+TopDeco.Size = UDim2.new(0, 32, 0, 32)
+TopDeco.Position = UDim2.new(1, -100, 0.5, -16)
 TopDeco.BackgroundTransparency = 1
-TopDeco.Image = IMG
-TopDeco.ImageTransparency = 0.15
-TopDeco.ZIndex = 2
+TopDeco.ZIndex = 3
 TopDeco.Parent = TopBar
-corner(TopDeco, 6)
+makeCatIcon(TopDeco, 32, 3)
 
 local function topBtn(text, x, isRed)
     local b = Instance.new("TextButton")
@@ -145,16 +252,13 @@ Sidebar.BorderSizePixel = 0
 Sidebar.ZIndex = 2
 Sidebar.Parent = Main
 
--- 装饰 3：Sidebar 底部
-local SideDeco = Instance.new("ImageLabel")
-SideDeco.Size = UDim2.new(0, 60, 0, 60)
-SideDeco.Position = UDim2.new(0.5, -30, 1, -74)
+local SideDeco = Instance.new("Frame")
+SideDeco.Size = UDim2.new(0, 50, 0, 50)
+SideDeco.Position = UDim2.new(0.5, -25, 1, -56)
 SideDeco.BackgroundTransparency = 1
-SideDeco.Image = IMG
-SideDeco.ImageTransparency = 0.3
 SideDeco.ZIndex = 2
 SideDeco.Parent = Sidebar
-corner(SideDeco, 8)
+makeCatIcon(SideDeco, 50, 2)
 
 local NavList = Instance.new("UIListLayout")
 NavList.Padding = UDim.new(0, 6)
@@ -211,8 +315,8 @@ local function makePage(name)
     p.Parent = Content
 
     local pad = Instance.new("UIPadding")
-    pad.PaddingTop = UDim.new(0, 16)
-    pad.PaddingBottom = UDim.new(0, 16)
+    pad.PaddingTop = UDim.new(0, 14)
+    pad.PaddingBottom = UDim.new(0, 14)
     pad.PaddingLeft = UDim.new(0, 14)
     pad.PaddingRight = UDim.new(0, 14)
     pad.Parent = p
@@ -227,7 +331,7 @@ end
 
 local function makeNavBtn(icon, label, pageName)
     local b = Instance.new("TextButton")
-    b.Size = UDim2.new(1, 0, 0, 38)
+    b.Size = UDim2.new(1, 0, 0, 36)
     b.BackgroundColor3 = C.card
     b.Text = "  " .. icon .. "  " .. label
     b.TextColor3 = C.textDim
@@ -257,7 +361,7 @@ end
 
 local function makeCard(parent, title, desc, height)
     local card = Instance.new("Frame")
-    card.Size = UDim2.new(1, 0, 0, height or 64)
+    card.Size = UDim2.new(1, 0, 0, height or 60)
     card.BackgroundColor3 = C.card
     card.BorderSizePixel = 0
     card.ZIndex = 3
@@ -266,7 +370,7 @@ local function makeCard(parent, title, desc, height)
 
     local t = Instance.new("TextLabel")
     t.Size = UDim2.new(1, -110, 0, 20)
-    t.Position = UDim2.new(0, 16, 0, 12)
+    t.Position = UDim2.new(0, 16, 0, 10)
     t.BackgroundTransparency = 1
     t.Text = title
     t.TextColor3 = C.text
@@ -278,8 +382,8 @@ local function makeCard(parent, title, desc, height)
 
     if desc then
         local d = Instance.new("TextLabel")
-        d.Size = UDim2.new(1, -32, 0, 32)
-        d.Position = UDim2.new(0, 16, 0, 32)
+        d.Size = UDim2.new(1, -32, 0, 30)
+        d.Position = UDim2.new(0, 16, 0, 30)
         d.BackgroundTransparency = 1
         d.Text = desc
         d.TextColor3 = C.textDim
@@ -296,11 +400,11 @@ local function makeCard(parent, title, desc, height)
 end
 
 local function makeToggle(parent, title, desc)
-    local card = makeCard(parent, title, desc, 64)
+    local card = makeCard(parent, title, desc, 60)
 
     local track = Instance.new("Frame")
     track.Size = UDim2.new(0, 40, 0, 22)
-    track.Position = UDim2.new(1, -56, 0, 20)
+    track.Position = UDim2.new(1, -56, 0, 19)
     track.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
     track.BorderSizePixel = 0
     track.ZIndex = 4
@@ -335,11 +439,11 @@ local function makeToggle(parent, title, desc)
 end
 
 local function makeSlider(parent, title, desc, defaultVal, minV, maxV)
-    local card = makeCard(parent, title, desc, 72)
+    local card = makeCard(parent, title, desc, 68)
 
     local valLabel = Instance.new("TextLabel")
     valLabel.Size = UDim2.new(0, 50, 0, 24)
-    valLabel.Position = UDim2.new(1, -160, 0, 18)
+    valLabel.Position = UDim2.new(1, -160, 0, 16)
     valLabel.BackgroundTransparency = 1
     valLabel.Text = tostring(defaultVal)
     valLabel.TextColor3 = C.text
@@ -350,7 +454,7 @@ local function makeSlider(parent, title, desc, defaultVal, minV, maxV)
 
     local barBg = Instance.new("Frame")
     barBg.Size = UDim2.new(0, 90, 0, 4)
-    barBg.Position = UDim2.new(1, -100, 0, 28)
+    barBg.Position = UDim2.new(1, -100, 0, 26)
     barBg.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
     barBg.BorderSizePixel = 0
     barBg.ZIndex = 4
@@ -410,12 +514,12 @@ end
 
 local function makeAction(parent, text, color)
     local b = Instance.new("TextButton")
-    b.Size = UDim2.new(1, 0, 0, 44)
+    b.Size = UDim2.new(1, 0, 0, 40)
     b.BackgroundColor3 = color or C.card
     b.Text = text
     b.TextColor3 = C.text
     b.Font = Enum.Font.GothamBold
-    b.TextSize = 14
+    b.TextSize = 13
     b.AutoButtonColor = false
     b.BorderSizePixel = 0
     b.ZIndex = 4
@@ -441,10 +545,10 @@ local function makeInfoCard(parent, title, lines)
     corner(card, 10)
 
     local pad = Instance.new("UIPadding")
-    pad.PaddingTop = UDim.new(0, 14)
-    pad.PaddingBottom = UDim.new(0, 14)
-    pad.PaddingLeft = UDim.new(0, 16)
-    pad.PaddingRight = UDim.new(0, 16)
+    pad.PaddingTop = UDim.new(0, 12)
+    pad.PaddingBottom = UDim.new(0, 12)
+    pad.PaddingLeft = UDim.new(0, 14)
+    pad.PaddingRight = UDim.new(0, 14)
     pad.Parent = card
 
     local layout = Instance.new("UIListLayout")
@@ -585,15 +689,13 @@ MiniBar.Parent = SG
 corner(MiniBar, 20)
 stroke(MiniBar, Color3.fromRGB(60, 60, 68), 1, 0.3)
 
--- 装饰 4：MiniBar 左侧图标
-local miniIcon = Instance.new("ImageLabel")
-miniIcon.Size = UDim2.new(0, 24, 0, 24)
-miniIcon.Position = UDim2.new(0, 10, 0.5, -12)
+local miniIcon = Instance.new("Frame")
+miniIcon.Size = UDim2.new(0, 28, 0, 28)
+miniIcon.Position = UDim2.new(0, 8, 0.5, -14)
 miniIcon.BackgroundTransparency = 1
-miniIcon.Image = IMG
 miniIcon.ZIndex = 101
 miniIcon.Parent = MiniBar
-corner(miniIcon, 12)
+makeCatIcon(miniIcon, 28, 102)
 
 local miniText = Instance.new("TextLabel")
 miniText.Size = UDim2.new(1, -50, 1, 0)
