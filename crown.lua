@@ -216,7 +216,7 @@ TopSub.Parent = TopBar
 
 local TopDeco = Instance.new("Frame")
 TopDeco.Size = UDim2.new(0, 32, 0, 32)
-TopDeco.Position = UDim2.new(1, -116, 0.5, -16)
+TopDeco.Position = UDim2.new(1, -132, 0.5, -16)
 TopDeco.BackgroundTransparency = 1
 TopDeco.ZIndex = 3
 TopDeco.Parent = TopBar
@@ -241,8 +241,8 @@ local function topBtn(text, x, isRed)
     return b
 end
 
-local CloseBtn = topBtn("×", -28, true)
-local MinBtn = topBtn("−", -68, false)
+local CloseBtn = topBtn("×", -44, true)
+local MinBtn = topBtn("−", -84, false)
 
 local Sidebar = Instance.new("Frame")
 Sidebar.Size = UDim2.new(0, 130, 1, -44)
@@ -756,6 +756,91 @@ MinBtn.MouseButton1Click:Connect(function()
     MiniBar.Visible = true
 end)
 
-CloseBtn.MouseButton1Click:Connect(function()
+local ConfirmOverlay = Instance.new("Frame")
+ConfirmOverlay.Size = UDim2.new(1, 0, 1, 0)
+ConfirmOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ConfirmOverlay.BackgroundTransparency = 0.5
+ConfirmOverlay.BorderSizePixel = 0
+ConfirmOverlay.Visible = false
+ConfirmOverlay.ZIndex = 200
+ConfirmOverlay.Parent = Main
+
+local ConfirmBox = Instance.new("Frame")
+ConfirmBox.Size = UDim2.new(0, 360, 0, 180)
+ConfirmBox.Position = UDim2.new(0.5, -180, 0.5, -90)
+ConfirmBox.BackgroundColor3 = Color3.fromRGB(36, 36, 44)
+ConfirmBox.BorderSizePixel = 0
+ConfirmBox.ZIndex = 201
+ConfirmBox.Parent = ConfirmOverlay
+corner(ConfirmBox, 14)
+stroke(ConfirmBox, Color3.fromRGB(60, 60, 70), 1, 0.3)
+
+local ConfirmTitle = Instance.new("TextLabel")
+ConfirmTitle.Size = UDim2.new(1, -32, 0, 30)
+ConfirmTitle.Position = UDim2.new(0, 20, 0, 22)
+ConfirmTitle.BackgroundTransparency = 1
+ConfirmTitle.Text = "确认关闭"
+ConfirmTitle.TextColor3 = C.text
+ConfirmTitle.TextXAlignment = Enum.TextXAlignment.Left
+ConfirmTitle.Font = Enum.Font.GothamBold
+ConfirmTitle.TextSize = 18
+ConfirmTitle.ZIndex = 202
+ConfirmTitle.Parent = ConfirmBox
+
+local ConfirmDesc = Instance.new("TextLabel")
+ConfirmDesc.Size = UDim2.new(1, -32, 0, 50)
+ConfirmDesc.Position = UDim2.new(0, 20, 0, 60)
+ConfirmDesc.BackgroundTransparency = 1
+ConfirmDesc.Text = "确定要关闭当前界面吗？关闭后将无法再次打开。"
+ConfirmDesc.TextColor3 = C.textDim
+ConfirmDesc.TextXAlignment = Enum.TextXAlignment.Left
+ConfirmDesc.TextYAlignment = Enum.TextYAlignment.Top
+ConfirmDesc.TextWrapped = true
+ConfirmDesc.Font = Enum.Font.Gotham
+ConfirmDesc.TextSize = 12
+ConfirmDesc.ZIndex = 202
+ConfirmDesc.Parent = ConfirmBox
+
+local function confirmBtn(text, x, w, color)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0, w, 0, 36)
+    b.Position = UDim2.new(1, x, 1, -52)
+    b.BackgroundColor3 = color
+    b.Text = text
+    b.TextColor3 = Color3.fromRGB(255, 255, 255)
+    b.Font = Enum.Font.GothamBold
+    b.TextSize = 13
+    b.AutoButtonColor = false
+    b.BorderSizePixel = 0
+    b.ZIndex = 202
+    b.Parent = ConfirmBox
+    corner(b, 8)
+    return b
+end
+
+local CancelBtn = confirmBtn("点错了", -284, 130, Color3.fromRGB(70, 70, 80))
+local CloseConfirmBtn = confirmBtn("关闭", -144, 130, Color3.fromRGB(200, 60, 70))
+
+CancelBtn.MouseEnter:Connect(function()
+    TweenService:Create(CancelBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(90, 90, 100)}):Play()
+end)
+CancelBtn.MouseLeave:Connect(function()
+    TweenService:Create(CancelBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(70, 70, 80)}):Play()
+end)
+CancelBtn.MouseButton1Click:Connect(function()
+    ConfirmOverlay.Visible = false
+end)
+
+CloseConfirmBtn.MouseEnter:Connect(function()
+    TweenService:Create(CloseConfirmBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(230, 80, 90)}):Play()
+end)
+CloseConfirmBtn.MouseLeave:Connect(function()
+    TweenService:Create(CloseConfirmBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(200, 60, 70)}):Play()
+end)
+CloseConfirmBtn.MouseButton1Click:Connect(function()
     SG:Destroy()
+end)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    ConfirmOverlay.Visible = true
 end)
