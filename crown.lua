@@ -194,7 +194,7 @@ local TopTitle = Instance.new("TextLabel")
 TopTitle.Size = UDim2.new(0, 260, 1, 0)
 TopTitle.Position = UDim2.new(0, 46, 0, 0)
 TopTitle.BackgroundTransparency = 1
-TopTitle.Text = "PUMP LAB  |  力量助手 v1.2"
+TopTitle.Text = "力量之冠封存"
 TopTitle.TextColor3 = C.text
 TopTitle.TextXAlignment = Enum.TextXAlignment.Left
 TopTitle.Font = Enum.Font.GothamBold
@@ -216,7 +216,7 @@ TopSub.Parent = TopBar
 
 local TopDeco = Instance.new("Frame")
 TopDeco.Size = UDim2.new(0, 32, 0, 32)
-TopDeco.Position = UDim2.new(1, -100, 0.5, -16)
+TopDeco.Position = UDim2.new(1, -116, 0.5, -16)
 TopDeco.BackgroundTransparency = 1
 TopDeco.ZIndex = 3
 TopDeco.Parent = TopBar
@@ -241,8 +241,8 @@ local function topBtn(text, x, isRed)
     return b
 end
 
-local CloseBtn = topBtn("×", -16, true)
-local MinBtn = topBtn("−", -56, false)
+local CloseBtn = topBtn("×", -28, true)
+local MinBtn = topBtn("−", -68, false)
 
 local Sidebar = Instance.new("Frame")
 Sidebar.Size = UDim2.new(0, 130, 1, -44)
