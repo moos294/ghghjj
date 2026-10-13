@@ -1,3 +1,5 @@
+local IMG = "rbxassetid://YOUR_ID_HERE"
+
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -65,29 +67,53 @@ local TopBar = Instance.new("Frame")
 TopBar.Size = UDim2.new(1, 0, 0, 44)
 TopBar.BackgroundColor3 = C.sidebar
 TopBar.BorderSizePixel = 0
+TopBar.ZIndex = 2
 TopBar.Parent = Main
 
+-- 装饰 1：TopBar 左侧 logo
+local TopLogo = Instance.new("ImageLabel")
+TopLogo.Size = UDim2.new(0, 24, 0, 24)
+TopLogo.Position = UDim2.new(0, 14, 0.5, -12)
+TopLogo.BackgroundTransparency = 1
+TopLogo.Image = IMG
+TopLogo.ZIndex = 3
+TopLogo.Parent = TopBar
+corner(TopLogo, 5)
+
 local TopTitle = Instance.new("TextLabel")
-TopTitle.Size = UDim2.new(0, 400, 1, 0)
-TopTitle.Position = UDim2.new(0, 20, 0, 0)
+TopTitle.Size = UDim2.new(0, 260, 1, 0)
+TopTitle.Position = UDim2.new(0, 46, 0, 0)
 TopTitle.BackgroundTransparency = 1
 TopTitle.Text = "PUMP LAB  |  力量助手 v1.2"
 TopTitle.TextColor3 = C.text
 TopTitle.TextXAlignment = Enum.TextXAlignment.Left
 TopTitle.Font = Enum.Font.GothamBold
 TopTitle.TextSize = 15
+TopTitle.ZIndex = 3
 TopTitle.Parent = TopBar
 
 local TopSub = Instance.new("TextLabel")
-TopSub.Size = UDim2.new(0, 400, 0, 12)
-TopSub.Position = UDim2.new(0, 20, 1, -16)
+TopSub.Size = UDim2.new(0, 260, 0, 12)
+TopSub.Position = UDim2.new(0, 46, 1, -16)
 TopSub.BackgroundTransparency = 1
 TopSub.Text = "log-based build · mobile ready"
 TopSub.TextColor3 = C.textSub
 TopSub.TextXAlignment = Enum.TextXAlignment.Left
 TopSub.Font = Enum.Font.Gotham
 TopSub.TextSize = 10
+TopSub.ZIndex = 3
 TopSub.Parent = TopBar
+
+-- 装饰 2：TopBar 右侧
+local TopDeco = Instance.new("ImageLabel")
+TopDeco.Size = UDim2.new(0, 80, 0, 36)
+TopDeco.Position = UDim2.new(1, -160, 0.5, -18)
+TopDeco.BackgroundTransparency = 1
+TopDeco.Image = IMG
+TopDeco.ImageTransparency = 0.15
+TopDeco.ZIndex = 2
+TopDeco.Parent = TopBar
+corner(TopDeco, 6)
 
 local function topBtn(text, x, isRed)
     local b = Instance.new("TextButton")
@@ -100,6 +126,7 @@ local function topBtn(text, x, isRed)
     b.TextSize = 14
     b.AutoButtonColor = false
     b.BorderSizePixel = 0
+    b.ZIndex = 4
     b.Parent = TopBar
     corner(b, 6)
     b.MouseEnter:Connect(function() b.BackgroundColor3 = C.cardHover end)
@@ -115,7 +142,19 @@ Sidebar.Size = UDim2.new(0, 130, 1, -44)
 Sidebar.Position = UDim2.new(0, 0, 0, 44)
 Sidebar.BackgroundColor3 = C.sidebar
 Sidebar.BorderSizePixel = 0
+Sidebar.ZIndex = 2
 Sidebar.Parent = Main
+
+-- 装饰 3：Sidebar 底部
+local SideDeco = Instance.new("ImageLabel")
+SideDeco.Size = UDim2.new(0, 60, 0, 60)
+SideDeco.Position = UDim2.new(0.5, -30, 1, -74)
+SideDeco.BackgroundTransparency = 1
+SideDeco.Image = IMG
+SideDeco.ImageTransparency = 0.3
+SideDeco.ZIndex = 2
+SideDeco.Parent = Sidebar
+corner(SideDeco, 8)
 
 local NavList = Instance.new("UIListLayout")
 NavList.Padding = UDim.new(0, 6)
@@ -133,6 +172,7 @@ Content.Position = UDim2.new(0, 130, 0, 44)
 Content.BackgroundColor3 = C.bg
 Content.BorderSizePixel = 0
 Content.ClipsDescendants = true
+Content.ZIndex = 2
 Content.Parent = Main
 
 local pages = {}
@@ -167,6 +207,7 @@ local function makePage(name)
     p.CanvasSize = UDim2.new(0, 0, 0, 0)
     p.AutomaticCanvasSize = Enum.AutomaticSize.Y
     p.Visible = false
+    p.ZIndex = 2
     p.Parent = Content
 
     local pad = Instance.new("UIPadding")
@@ -195,6 +236,7 @@ local function makeNavBtn(icon, label, pageName)
     b.TextXAlignment = Enum.TextXAlignment.Left
     b.AutoButtonColor = false
     b.BorderSizePixel = 0
+    b.ZIndex = 3
     b.Parent = Sidebar
     corner(b, 8)
 
@@ -218,6 +260,7 @@ local function makeCard(parent, title, desc, height)
     card.Size = UDim2.new(1, 0, 0, height or 64)
     card.BackgroundColor3 = C.card
     card.BorderSizePixel = 0
+    card.ZIndex = 3
     card.Parent = parent
     corner(card, 10)
 
@@ -230,6 +273,7 @@ local function makeCard(parent, title, desc, height)
     t.TextXAlignment = Enum.TextXAlignment.Left
     t.Font = Enum.Font.GothamBold
     t.TextSize = 14
+    t.ZIndex = 4
     t.Parent = card
 
     if desc then
@@ -244,6 +288,7 @@ local function makeCard(parent, title, desc, height)
         d.TextWrapped = true
         d.Font = Enum.Font.Gotham
         d.TextSize = 11
+        d.ZIndex = 4
         d.Parent = card
     end
 
@@ -258,6 +303,7 @@ local function makeToggle(parent, title, desc)
     track.Position = UDim2.new(1, -56, 0, 20)
     track.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
     track.BorderSizePixel = 0
+    track.ZIndex = 4
     track.Parent = card
     corner(track, 11)
 
@@ -266,6 +312,7 @@ local function makeToggle(parent, title, desc)
     knob.Position = UDim2.new(0, 2, 0.5, -9)
     knob.BackgroundColor3 = Color3.fromRGB(240, 240, 245)
     knob.BorderSizePixel = 0
+    knob.ZIndex = 5
     knob.Parent = track
     corner(knob, 9)
 
@@ -274,6 +321,7 @@ local function makeToggle(parent, title, desc)
     hit.Size = UDim2.new(1, 0, 1, 0)
     hit.BackgroundTransparency = 1
     hit.Text = ""
+    hit.ZIndex = 6
     hit.Parent = card
     hit.MouseButton1Click:Connect(function()
         on = not on
@@ -297,6 +345,7 @@ local function makeSlider(parent, title, desc, defaultVal, minV, maxV)
     valLabel.TextColor3 = C.text
     valLabel.Font = Enum.Font.GothamBold
     valLabel.TextSize = 14
+    valLabel.ZIndex = 4
     valLabel.Parent = card
 
     local barBg = Instance.new("Frame")
@@ -304,6 +353,7 @@ local function makeSlider(parent, title, desc, defaultVal, minV, maxV)
     barBg.Position = UDim2.new(1, -100, 0, 28)
     barBg.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
     barBg.BorderSizePixel = 0
+    barBg.ZIndex = 4
     barBg.Parent = card
     corner(barBg, 2)
 
@@ -312,6 +362,7 @@ local function makeSlider(parent, title, desc, defaultVal, minV, maxV)
     fill.Size = UDim2.new(pct, 0, 1, 0)
     fill.BackgroundColor3 = C.accent
     fill.BorderSizePixel = 0
+    fill.ZIndex = 5
     fill.Parent = barBg
     corner(fill, 2)
 
@@ -320,7 +371,7 @@ local function makeSlider(parent, title, desc, defaultVal, minV, maxV)
     knob.Position = UDim2.new(pct, -7, 0.5, -7)
     knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     knob.BorderSizePixel = 0
-    knob.ZIndex = 3
+    knob.ZIndex = 6
     knob.Parent = barBg
     corner(knob, 7)
 
@@ -367,6 +418,7 @@ local function makeAction(parent, text, color)
     b.TextSize = 14
     b.AutoButtonColor = false
     b.BorderSizePixel = 0
+    b.ZIndex = 4
     b.Parent = parent
     corner(b, 10)
     b.MouseEnter:Connect(function()
@@ -384,6 +436,7 @@ local function makeInfoCard(parent, title, lines)
     card.AutomaticSize = Enum.AutomaticSize.Y
     card.BackgroundColor3 = C.card
     card.BorderSizePixel = 0
+    card.ZIndex = 3
     card.Parent = parent
     corner(card, 10)
 
@@ -407,6 +460,7 @@ local function makeInfoCard(parent, title, lines)
     t.Font = Enum.Font.GothamBold
     t.TextSize = 14
     t.LayoutOrder = 1
+    t.ZIndex = 4
     t.Parent = card
 
     for i, line in ipairs(lines) do
@@ -421,6 +475,7 @@ local function makeInfoCard(parent, title, lines)
         l.Font = Enum.Font.Gotham
         l.TextSize = 12
         l.LayoutOrder = i + 1
+        l.ZIndex = 4
         l.Parent = card
     end
 
@@ -530,23 +585,15 @@ MiniBar.Parent = SG
 corner(MiniBar, 20)
 stroke(MiniBar, Color3.fromRGB(60, 60, 68), 1, 0.3)
 
-local iconBox = Instance.new("Frame")
-iconBox.Size = UDim2.new(0, 22, 0, 22)
-iconBox.Position = UDim2.new(0, 12, 0.5, -11)
-iconBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-iconBox.BorderSizePixel = 0
-iconBox.ZIndex = 101
-iconBox.Parent = MiniBar
-corner(iconBox, 4)
-
-local iconInner = Instance.new("Frame")
-iconInner.Size = UDim2.new(0, 10, 0, 10)
-iconInner.Position = UDim2.new(0.5, -5, 0.5, -5)
-iconInner.BackgroundColor3 = Color3.fromRGB(40, 40, 46)
-iconInner.BorderSizePixel = 0
-iconInner.ZIndex = 102
-iconInner.Parent = iconBox
-corner(iconInner, 2)
+-- 装饰 4：MiniBar 左侧图标
+local miniIcon = Instance.new("ImageLabel")
+miniIcon.Size = UDim2.new(0, 24, 0, 24)
+miniIcon.Position = UDim2.new(0, 10, 0.5, -12)
+miniIcon.BackgroundTransparency = 1
+miniIcon.Image = IMG
+miniIcon.ZIndex = 101
+miniIcon.Parent = MiniBar
+corner(miniIcon, 12)
 
 local miniText = Instance.new("TextLabel")
 miniText.Size = UDim2.new(1, -50, 1, 0)
