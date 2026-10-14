@@ -30,6 +30,8 @@ local Cfg = {
     InfiniteRebirth = false, BaseStrength = 10000,
     Fly = false, FlySpeed = 50, WalkSpeed = 16, AntiAfk = true,
     TotalReps = 0, AutoRebirthDone = 0, ScriptStartTime = tick(),
+    TeleportTarget = "", TeleportLoop = false, TeleportOffsetY = 3,
+    AntiIdleKick = true, AntiClientKick = false, BypassGroup = false,
 }
 
 local C = {
@@ -101,10 +103,113 @@ local function getCurrentRebirths()
     return count
 end
 
+local function applyAntiIdleKick()
+    if not getconnections then
+        warn("[反挂机-kick] 当前执行器不支持 getconnections")
+        return
+    end
+    pcall(function()
+        for _, conn in next, getconnections(player.Idled) do
+            pcall(function() conn:Disable() end)
+            pcall(function() conn:Disconnect() end)
+        end
+    end)
+end
+
+local function applyAntiClientKick()
+    if not getgc then
+        warn("[防踢] 当前执行器不支持 getgc")
+        return
+    end
+    pcall(function()
+        for _, Value in next, getgc(true) do
+            if typeof(Value) == "table" then
+                if rawget(Value, "indexInstance") or rawget(Value, "newindexInstance") or rawget(Value, "newIndexInstance") then
+                    Value.tvk = {"kick", function() return task.wait(9e9) end}
+                end
+            end
+        end
+    end)
+end
+
+local function applyBypassGroup()
+    if not hookmetamethod or not hookfunction then
+        warn("[绕过群组] 当前执行器不支持 hookmetamethod / hookfunction")
+        return
+    end
+    pcall(function()
+        local clonerefFunc = cloneref or function(o) return o end
+        local getnamecallmethod = getnamecallmethod
+        local Speaker = clonerefFunc(Players).LocalPlayer
+
+        local OldNameCall
+        OldNameCall = hookmetamethod(game, "__namecall", function(self, ...)
+            if self ~= Speaker or getnamecallmethod() ~= "IsInGroup" then
+                return OldNameCall(self, ...)
+            end
+            return true
+        end)
+
+        hookfunction(Speaker.IsInGroup, function(self, ...)
+            return true
+        end)
+    end)
+end
+
+local TP = {
+    Target = "",
+    Loop = false,
+    OffsetY = 3,
+    Thread = nil,
+}
+
+function TP:GetPlayerList(includeLocal)
+    local list = {}
+    for _, p in ipairs(Players:GetPlayers()) do
+        if includeLocal or p ~= player then
+            table.insert(list, p.Name)
+        end
+    end
+    return list
+end
+
+function TP:ToTarget()
+    local char = player.Character
+    if not char then return false end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return false end
+
+    local target = Players:FindFirstChild(self.Target)
+    if not target or not target.Character then return false end
+    local targetHrp = target.Character:FindFirstChild("HumanoidRootPart")
+    if not targetHrp then return false end
+
+    hrp.CFrame = targetHrp.CFrame + Vector3.new(0, self.OffsetY, 0)
+    return true
+end
+
+function TP:StartLoop()
+    if self.Loop then return end
+    self.Loop = true
+    self.Thread = task.spawn(function()
+        while self.Loop do
+            self:ToTarget()
+            task.wait()
+        end
+    end)
+end
+
+function TP:StopLoop()
+    self.Loop = false
+    self.Thread = nil
+end
+
+_G.TP = TP
+
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/download/1.6.66/main.lua"))()
 local Window = WindUI:CreateWindow({
-    Title = "综合挂机面板 (融合版)", Icon = "zap", Author = "by Assistant",
-    Folder = "FusionEgg", Theme = "Dark", Transparent = true,
+    Title = "力量之冠封存全能版", Icon = "zap", Author = "力量之冠",
+    Folder = "PowerCrownSave", Theme = "Dark", Transparent = true,
     Resizable = false, Size = UDim2.fromOffset(460, 780),
 })
 local MainTab = Window:Tab({ Title = "控制面板", Icon = "settings" })
@@ -157,8 +262,106 @@ MoveSection:Slider({ Title = "步行速度", Value = { Min = 16, Max = 500, Defa
 MoveSection:Slider({ Title = "飞行速度", Value = { Min = 10, Max = 500, Default = 50 }, Step = 1, Callback = function(value) Cfg.FlySpeed = value end })
 MoveSection:Toggle({ Title = "反挂机", Value = true, Callback = function(state) Cfg.AntiAfk = state end })
 
+local TeleportTab = Window:Tab({ Title = "传送", Icon = "send" })
+
+local TPSection = TeleportTab:Section({ Title = "传送玩家", Icon = "user" })
+TPSection:Input({
+    Title = "目标玩家名字",
+    Placeholder = "输入玩家名",
+    Value = "",
+    Callback = function(text)
+        Cfg.TeleportTarget = text
+        TP.Target = text
+    end
+})
+TPSection:Slider({
+    Title = "传送高度偏移 (Y)",
+    Value = { Min = 0, Max = 20, Default = 3 },
+    Step = 1,
+    Callback = function(value)
+        Cfg.TeleportOffsetY = value
+        TP.OffsetY = value
+    end
+})
+
+local TPStatus = TPSection:Paragraph({ Title = "传送状态", Desc = "待机中..." })
+
+TPSection:Button({
+    Title = "刷新玩家列表 (控制台打印)",
+    Callback = function()
+        local list = TP:GetPlayerList(true)
+        print("[传送] 当前服务器玩家：")
+        for _, n in ipairs(list) do print("  " .. n) end
+        TPStatus:SetDesc("共 " .. #list .. " 名玩家，详见控制台")
+    end
+})
+
+TPSection:Button({
+    Title = "传送到目标玩家",
+    Callback = function()
+        if TP.Target == "" then
+            TPStatus:SetDesc("请先填写目标玩家名字")
+            return
+        end
+        local ok = TP:ToTarget()
+        if ok then
+            TPStatus:SetDesc("已传送到 " .. TP.Target)
+        else
+            TPStatus:SetDesc("传送失败：找不到目标或角色")
+        end
+    end
+})
+
+TPSection:Toggle({
+    Title = "循环锁定传送",
+    Value = false,
+    Callback = function(state)
+        if state then
+            if TP.Target == "" then
+                TPStatus:SetDesc("请先填写目标玩家名字")
+                return
+            end
+            TP:StartLoop()
+            TPStatus:SetDesc("循环传送中 -> " .. TP.Target)
+        else
+            TP:StopLoop()
+            TPStatus:SetDesc("已停止循环传送")
+        end
+    end
+})
+
+local ProtectTab = Window:Tab({ Title = "防护", Icon = "shield" })
+
+local AntiSection = ProtectTab:Section({ Title = "反挂机 / 防踢", Icon = "shield-check" })
+AntiSection:Toggle({
+    Title = "反挂机踢出 (getconnections)",
+    Value = true,
+    Callback = function(state)
+        Cfg.AntiIdleKick = state
+        if state then applyAntiIdleKick() end
+    end
+})
+AntiSection:Toggle({
+    Title = "防客户端踢出",
+    Value = false,
+    Callback = function(state)
+        Cfg.AntiClientKick = state
+        if state then applyAntiClientKick() end
+    end
+})
+
+local GroupSection = ProtectTab:Section({ Title = "群组验证", Icon = "users" })
+GroupSection:Toggle({
+    Title = "绕过群组验证",
+    Value = false,
+    Callback = function(state)
+        Cfg.BypassGroup = state
+        if state then applyBypassGroup() end
+    end
+})
+
 local SG = Instance.new("ScreenGui")
-SG.Name = "FusionPumpLabUI"
+SG.Name = "PowerCrownUI"
 SG.ResetOnSpawn = false
 SG.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 SG.IgnoreGuiInset = true
@@ -179,7 +382,7 @@ stroke(DataHUD, C.accent, 1.5, 0.2)
 local HUDTitle = Instance.new("TextLabel")
 HUDTitle.Size = UDim2.new(1, 0, 0, 24)
 HUDTitle.BackgroundTransparency = 1
-HUDTitle.Text = "📊 PUMP LAB · 累计总数据"
+HUDTitle.Text = "📊 力量之冠封存全能版 · 累计总数据"
 HUDTitle.TextColor3 = C.accent
 HUDTitle.Font = Enum.Font.GothamBold
 HUDTitle.TextSize = 12
@@ -548,4 +751,6 @@ player.Idled:Connect(function()
 end)
 
 applyWalkSpeed()
-print("[融合版] WindUI控制面板 + 悬浮窗 + 飞行 + 自动重生 + 无间隔极速锻炼 已加载")
+if Cfg.AntiIdleKick then applyAntiIdleKick() end
+
+print("[力量之冠封存全能版] 已加载")
