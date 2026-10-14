@@ -156,6 +156,103 @@ local function applyBypassGroup()
     end)
 end
 
+local function applyGrayBuildings()
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") then
+            local isCharacter = false
+            for _, plr in ipairs(Players:GetPlayers()) do
+                if plr.Character and obj:IsDescendantOf(plr.Character) then
+                    isCharacter = true
+                    break
+                end
+            end
+            local isPet = false
+            local parent = obj.Parent
+            while parent and parent ~= workspace do
+                if parent.Name:lower():find("pet") or parent.Name:lower():find("宠物") then
+                    isPet = true
+                    break
+                end
+                parent = parent.Parent
+            end
+            if not isCharacter and not isPet then
+                obj.Material = Enum.Material.SmoothPlastic
+                obj.Color = Color3.fromRGB(128, 128, 128)
+                obj.Reflectance = 0
+                for _, child in ipairs(obj:GetChildren()) do
+                    if child:IsA("Texture") or child:IsA("Decal") or child:IsA("SurfaceAppearance") then
+                        child:Destroy()
+                    end
+                end
+            end
+        end
+    end
+end
+
+local function hidePets()
+    for _, plr in ipairs(Players:GetPlayers()) do
+        local char = plr.Character
+        if char then
+            for _, obj in ipairs(char:GetChildren()) do
+                if obj:IsA("Model") and (obj.Name:lower():find("pet") or obj.Name:lower():find("宠物")) then
+                    for _, part in ipairs(obj:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.Transparency = 1
+                        end
+                    end
+                end
+            end
+        end
+    end
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Model") and (obj.Name:lower():find("pet") or obj.Name:lower():find("宠物")) then
+            for _, part in ipairs(obj:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Transparency = 1
+                end
+            end
+        end
+    end
+end
+
+local function boostPerformance()
+    local Lighting = game:GetService("Lighting")
+    pcall(function()
+        Lighting.GlobalShadows = false
+        Lighting.FogEnd = 100000
+        Lighting.Brightness = 1
+        Lighting.EnvironmentDiffuseScale = 0
+        Lighting.EnvironmentSpecularScale = 0
+        Lighting.OutdoorAmbient = Color3.fromRGB(0, 0, 0)
+        Lighting.ClockTime = 12
+    end)
+    for _, v in ipairs(Lighting:GetChildren()) do
+        if v:IsA("PostEffect") then
+            v:Destroy()
+        end
+    end
+    for _, v in ipairs(workspace:GetDescendants()) do
+        if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") then
+            v.Enabled = false
+        end
+        if v:IsA("Beam") then
+            v.Enabled = false
+        end
+        if v:IsA("Texture") or v:IsA("Decal") then
+            v.Transparency = 1
+        end
+        if v:IsA("SurfaceAppearance") then
+            v:Destroy()
+        end
+    end
+    pcall(function()
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+    end)
+    pcall(function()
+        collectgarbage()
+    end)
+end
+
 local TP = {
     Target = "",
     Loop = false,
@@ -262,18 +359,65 @@ MoveSection:Slider({ Title = "步行速度", Value = { Min = 16, Max = 500, Defa
 MoveSection:Slider({ Title = "飞行速度", Value = { Min = 10, Max = 500, Default = 50 }, Step = 1, Callback = function(value) Cfg.FlySpeed = value end })
 MoveSection:Toggle({ Title = "反挂机", Value = true, Callback = function(state) Cfg.AntiAfk = state end })
 
+local VisualSection = MainTab:Section({ Title = "场景优化", Icon = "eye" })
+VisualSection:Button({
+    Title = "灰色建筑模式",
+    Callback = function()
+        applyGrayBuildings()
+    end
+})
+VisualSection:Button({
+    Title = "隐藏宠物",
+    Callback = function()
+        hidePets()
+    end
+})
+VisualSection:Button({
+    Title = "提高帧率并降低延迟",
+    Callback = function()
+        boostPerformance()
+    end
+})
+
 local TeleportTab = Window:Tab({ Title = "传送", Icon = "send" })
 
 local TPSection = TeleportTab:Section({ Title = "传送玩家", Icon = "user" })
-TPSection:Input({
-    Title = "目标玩家名字",
-    Placeholder = "输入玩家名",
+
+local function GetPlayerList()
+    local list = {}
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= player then
+            table.insert(list, p.Name)
+        end
+    end
+    return list
+end
+
+local TPStatus = TPSection:Paragraph({ Title = "传送状态", Desc = "待机中..." })
+
+local TPDropdown = TPSection:Dropdown({
+    Title = "选择在线玩家",
+    Values = GetPlayerList(),
     Value = "",
-    Callback = function(text)
-        Cfg.TeleportTarget = text
-        TP.Target = text
+    Multi = false,
+    Callback = function(selected)
+        if type(selected) == "table" then
+            selected = selected[1]
+        end
+        TP.Target = selected or ""
+        Cfg.TeleportTarget = TP.Target
     end
 })
+
+TPSection:Button({
+    Title = "刷新玩家列表",
+    Callback = function()
+        local list = GetPlayerList()
+        pcall(function() TPDropdown:Refresh(list) end)
+        TPStatus:SetDesc("已刷新，共 " .. #list .. " 名玩家")
+    end
+})
+
 TPSection:Slider({
     Title = "传送高度偏移 (Y)",
     Value = { Min = 0, Max = 20, Default = 3 },
@@ -284,23 +428,11 @@ TPSection:Slider({
     end
 })
 
-local TPStatus = TPSection:Paragraph({ Title = "传送状态", Desc = "待机中..." })
-
-TPSection:Button({
-    Title = "刷新玩家列表 (控制台打印)",
-    Callback = function()
-        local list = TP:GetPlayerList(true)
-        print("[传送] 当前服务器玩家：")
-        for _, n in ipairs(list) do print("  " .. n) end
-        TPStatus:SetDesc("共 " .. #list .. " 名玩家，详见控制台")
-    end
-})
-
 TPSection:Button({
     Title = "传送到目标玩家",
     Callback = function()
         if TP.Target == "" then
-            TPStatus:SetDesc("请先填写目标玩家名字")
+            TPStatus:SetDesc("请先选择玩家")
             return
         end
         local ok = TP:ToTarget()
@@ -318,7 +450,7 @@ TPSection:Toggle({
     Callback = function(state)
         if state then
             if TP.Target == "" then
-                TPStatus:SetDesc("请先填写目标玩家名字")
+                TPStatus:SetDesc("请先选择玩家")
                 return
             end
             TP:StartLoop()
@@ -329,6 +461,16 @@ TPSection:Toggle({
         end
     end
 })
+
+Players.PlayerAdded:Connect(function()
+    task.wait(0.5)
+    pcall(function() TPDropdown:Refresh(GetPlayerList()) end)
+end)
+
+Players.PlayerRemoving:Connect(function()
+    task.wait(0.2)
+    pcall(function() TPDropdown:Refresh(GetPlayerList()) end)
+end)
 
 local ProtectTab = Window:Tab({ Title = "防护", Icon = "shield" })
 
