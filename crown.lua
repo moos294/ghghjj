@@ -337,50 +337,26 @@ MoveSection:Slider({ Title = "飞行速度", Value = { Min = 10, Max = 500, Defa
 MoveSection:Toggle({ Title = "反挂机", Value = true, Callback = function(state) Cfg.AntiAfk = state end })
 
 local VisualSection = MainTab:Section({ Title = "场景优化", Icon = "eye" })
-VisualSection:Button({
-    Title = "灰色建筑模式",
-    Callback = function()
-        applyGrayBuildings()
-    end
-})
-VisualSection:Button({
-    Title = "隐藏宠物",
-    Callback = function()
-        hidePets()
-    end
-})
-VisualSection:Button({
-    Title = "提高帧率并降低延迟",
-    Callback = function()
-        boostPerformance()
-    end
-})
+VisualSection:Button({ Title = "灰色建筑模式", Callback = function() applyGrayBuildings() end })
+VisualSection:Button({ Title = "隐藏宠物", Callback = function() hidePets() end })
+VisualSection:Button({ Title = "提高帧率并降低延迟", Callback = function() boostPerformance() end })
 
 local TeleportTab = Window:Tab({ Title = "传送", Icon = "send" })
-
 local TPSection = TeleportTab:Section({ Title = "传送玩家", Icon = "user" })
 
 local function GetPlayerList()
     local list = {}
     for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= player then
-            table.insert(list, p.Name)
-        end
+        if p ~= player then table.insert(list, p.Name) end
     end
     return list
 end
 
 local TPStatus = TPSection:Paragraph({ Title = "传送状态", Desc = "待机中..." })
-
 local TPDropdown = TPSection:Dropdown({
-    Title = "选择在线玩家",
-    Values = GetPlayerList(),
-    Value = "",
-    Multi = false,
+    Title = "选择在线玩家", Values = GetPlayerList(), Value = "", Multi = false,
     Callback = function(selected)
-        if type(selected) == "table" then
-            selected = selected[1]
-        end
+        if type(selected) == "table" then selected = selected[1] end
         TP.Target = selected or ""
         Cfg.TeleportTarget = TP.Target
     end
@@ -396,40 +372,24 @@ TPSection:Button({
 })
 
 TPSection:Slider({
-    Title = "传送高度偏移 (Y)",
-    Value = { Min = 0, Max = 20, Default = 3 },
-    Step = 1,
-    Callback = function(value)
-        Cfg.TeleportOffsetY = value
-        TP.OffsetY = value
-    end
+    Title = "传送高度偏移 (Y)", Value = { Min = 0, Max = 20, Default = 3 }, Step = 1,
+    Callback = function(value) Cfg.TeleportOffsetY = value TP.OffsetY = value end
 })
 
 TPSection:Button({
     Title = "传送到目标玩家",
     Callback = function()
-        if TP.Target == "" then
-            TPStatus:SetDesc("请先选择玩家")
-            return
-        end
+        if TP.Target == "" then TPStatus:SetDesc("请先选择玩家") return end
         local ok = TP:ToTarget()
-        if ok then
-            TPStatus:SetDesc("已传送到 " .. TP.Target)
-        else
-            TPStatus:SetDesc("传送失败：找不到目标或角色")
-        end
+        if ok then TPStatus:SetDesc("已传送到 " .. TP.Target) else TPStatus:SetDesc("传送失败：找不到目标或角色") end
     end
 })
 
 TPSection:Toggle({
-    Title = "循环锁定传送",
-    Value = false,
+    Title = "循环锁定传送", Value = false,
     Callback = function(state)
         if state then
-            if TP.Target == "" then
-                TPStatus:SetDesc("请先选择玩家")
-                return
-            end
+            if TP.Target == "" then TPStatus:SetDesc("请先选择玩家") return end
             TP:StartLoop()
             TPStatus:SetDesc("循环传送中 -> " .. TP.Target)
         else
@@ -439,44 +399,24 @@ TPSection:Toggle({
     end
 })
 
-Players.PlayerAdded:Connect(function()
-    task.wait(0.5)
-    pcall(function() TPDropdown:Refresh(GetPlayerList()) end)
-end)
-
-Players.PlayerRemoving:Connect(function()
-    task.wait(0.2)
-    pcall(function() TPDropdown:Refresh(GetPlayerList()) end)
-end)
+Players.PlayerAdded:Connect(function() task.wait(0.5) pcall(function() TPDropdown:Refresh(GetPlayerList()) end) end)
+Players.PlayerRemoving:Connect(function() task.wait(0.2) pcall(function() TPDropdown:Refresh(GetPlayerList()) end) end)
 
 local ProtectTab = Window:Tab({ Title = "防护", Icon = "shield" })
-
 local AntiSection = ProtectTab:Section({ Title = "反挂机 / 防踢", Icon = "shield-check" })
 AntiSection:Toggle({
-    Title = "反挂机踢出 (getconnections)",
-    Value = true,
-    Callback = function(state)
-        Cfg.AntiIdleKick = state
-        if state then applyAntiIdleKick() end
-    end
+    Title = "反挂机踢出 (getconnections)", Value = true,
+    Callback = function(state) Cfg.AntiIdleKick = state if state then applyAntiIdleKick() end end
 })
 AntiSection:Toggle({
-    Title = "防客户端踢出",
-    Value = false,
-    Callback = function(state)
-        Cfg.AntiClientKick = state
-        if state then applyAntiClientKick() end
-    end
+    Title = "防客户端踢出", Value = false,
+    Callback = function(state) Cfg.AntiClientKick = state if state then applyAntiClientKick() end end
 })
 
 local GroupSection = ProtectTab:Section({ Title = "群组验证", Icon = "users" })
 GroupSection:Toggle({
-    Title = "绕过群组验证",
-    Value = false,
-    Callback = function(state)
-        Cfg.BypassGroup = state
-        if state then applyBypassGroup() end
-    end
+    Title = "绕过群组验证", Value = false,
+    Callback = function(state) Cfg.BypassGroup = state if state then applyBypassGroup() end end
 })
 
 local SG = Instance.new("ScreenGui")
@@ -728,25 +668,65 @@ task.spawn(function()
                 TrainStatus:SetDesc("正在锻炼: " .. Cfg.TrainActionCN)
             end)
         else
-            TrainStatus:SetDesc("待机中")
+            TrainStatus:SetDesc("待机中...")
         end
     end
 end)
 
 task.spawn(function()
-    local fastTrainEvent
-    pcall(function() fastTrainEvent = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("TrainEvent", 5) end)
+    local RS = game:GetService("ReplicatedStorage").Remotes
+    local trainEvent = RS:WaitForChild("TrainEvent", 5)
+    local leaderstats = player:WaitForChild("leaderstats", 5)
+    local Strength = leaderstats and leaderstats:FindFirstChild("Strength")
+
+    local allActions = {
+        "PushUp", "Dumbbell", "ShoulderPress_1", "ShoulderPress_2", "ShoulderPress_3",
+        "TrendMill_1", "FlatBench_1", "FlatBench_L1", "FlatBench_K1", "Rock_1",
+        "Rock_2", "Rock_3", "BarbellRack_L1", "BarbellRack_S1", "BarbellRack_1",
+        "BarbellRack_2", "BenchPress_L1", "BenchPress_1", "BenchPress_2",
+        "Red slime", "SkySlime"
+    }
+
+    local lastSent = {}
+    for _, act in ipairs(allActions) do
+        lastSent[act] = 0
+    end
+
+    local interval = 0.5
+
     while SG.Parent do
-        if Cfg.FastTrain and fastTrainEvent then
-            for i = 1, Cfg.FastPerBeat do
-                pcall(function()
-                    fastTrainEvent:FireServer(Cfg.FastTrainAction)
-                end)
-                Cfg.FastTotalReps = Cfg.FastTotalReps + 1
-                Cfg.TotalReps = Cfg.TotalReps + 1
+        if Cfg.FastTrain and trainEvent then
+            local now = tick()
+            local sentThisRound = 0
+
+            for _, act in ipairs(allActions) do
+                if now - lastSent[act] >= interval then
+                    pcall(function()
+                        trainEvent:FireServer(act)
+                    end)
+                    lastSent[act] = now
+                    Cfg.FastTotalReps = Cfg.FastTotalReps + 1
+                    Cfg.TotalReps = Cfg.TotalReps + 1
+                    sentThisRound = sentThisRound + 1
+                end
             end
+
+            if sentThisRound > 0 then
+                local char = player.Character
+                if char then
+                    local hum = char:FindFirstChildOfClass("Humanoid")
+                    if hum then
+                        for _, track in ipairs(hum:GetPlayingAnimationTracks()) do
+                            track:Stop(0)
+                        end
+                    end
+                end
+            end
+
+            FastTrainStatus:SetDesc(string.format("全动作轮转中 | 本轮触发 %d 个动作", sentThisRound))
         end
-        task.wait(Cfg.FastInterval)
+
+        task.wait(0.05)
     end
 end)
 
@@ -763,7 +743,7 @@ task.spawn(function()
                 lastReps = Cfg.FastTotalReps
                 lastTime = now
             end
-            FastTrainStatus:SetDesc(string.format("极速: %s | 速率 %d/s | 累计 %d", Cfg.FastTrainActionCN, rate, Cfg.FastTotalReps))
+            FastTrainStatus:SetDesc(string.format("极速: 全动作 | 速率 %d/s | 累计 %d", rate, Cfg.FastTotalReps))
         else
             FastTrainStatus:SetDesc("待机中...")
         end
