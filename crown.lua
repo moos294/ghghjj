@@ -5,6 +5,68 @@ local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
+task.spawn(function()
+    local RS = game:GetService("ReplicatedStorage")
+    local allEvents = {}
+    for _, v in ipairs(RS:GetDescendants()) do
+        if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
+            table.insert(allEvents, v:GetFullName())
+        end
+    end
+    local sg = Instance.new("ScreenGui")
+    sg.Name = "DebugEventUI"
+    sg.ResetOnSpawn = false
+    sg.IgnoreGuiInset = true
+    pcall(function() sg.Parent = game:GetService("CoreGui") end)
+    if not sg.Parent then sg.Parent = player:WaitForChild("PlayerGui") end
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0.85, 0, 0.6, 0)
+    frame.Position = UDim2.new(0.5, 0, 0.5, 0)
+    frame.AnchorPoint = Vector2.new(0.5, 0.5)
+    frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    frame.BackgroundTransparency = 0.1
+    frame.BorderSizePixel = 0
+    frame.Parent = sg
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10)
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 40)
+    title.BackgroundTransparency = 1
+    title.Text = "探测到的事件 (截图发给我)"
+    title.TextColor3 = Color3.fromRGB(0, 200, 255)
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 16
+    title.Parent = frame
+    local scroll = Instance.new("ScrollingFrame")
+    scroll.Size = UDim2.new(1, -20, 1, -50)
+    scroll.Position = UDim2.new(0, 10, 0, 45)
+    scroll.BackgroundTransparency = 1
+    scroll.BorderSizePixel = 0
+    scroll.ScrollBarThickness = 6
+    scroll.Parent = frame
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 0, 0)
+    label.AutomaticSize = Enum.AutomaticSize.Y
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(230, 230, 230)
+    label.Font = Enum.Font.Code
+    label.TextSize = 12
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.TextWrapped = true
+    label.Text = table.concat(allEvents, "\n\n")
+    label.Parent = scroll
+    local close = Instance.new("TextButton")
+    close.Size = UDim2.new(0, 80, 0, 30)
+    close.Position = UDim2.new(1, -90, 0, 5)
+    close.BackgroundColor3 = Color3.fromRGB(220, 70, 80)
+    close.Text = "关闭"
+    close.TextColor3 = Color3.fromRGB(255, 255, 255)
+    close.Font = Enum.Font.GothamBold
+    close.TextSize = 14
+    close.Parent = frame
+    Instance.new("UICorner", close).CornerRadius = UDim.new(0, 6)
+    close.MouseButton1Click:Connect(function() sg:Destroy() end)
+end)
+
 local ActionMap = {
     ["俯卧撑"] = "PushUp", ["哑铃"] = "Dumbbell", ["肩部推举1"] = "ShoulderPress_1",
     ["肩部推举2"] = "ShoulderPress_2", ["肩部推举3"] = "ShoulderPress_3",
@@ -105,7 +167,6 @@ end
 
 local function applyAntiIdleKick()
     if not getconnections then
-        warn("[反挂机-kick] 当前执行器不支持 getconnections")
         return
     end
     pcall(function()
@@ -118,7 +179,6 @@ end
 
 local function applyAntiClientKick()
     if not getgc then
-        warn("[防踢] 当前执行器不支持 getgc")
         return
     end
     pcall(function()
@@ -134,7 +194,6 @@ end
 
 local function applyBypassGroup()
     if not hookmetamethod or not hookfunction then
-        warn("[绕过群组] 当前执行器不支持 hookmetamethod / hookfunction")
         return
     end
     pcall(function()
@@ -751,7 +810,7 @@ task.spawn(function()
                 TrainStatus:SetDesc("正在锻炼: " .. Cfg.TrainActionCN)
             end)
         else
-            TrainStatus:SetDesc("待机中")
+            TrainStatus:SetDesc("待机中...")
         end
     end
 end)
@@ -894,5 +953,3 @@ end)
 
 applyWalkSpeed()
 if Cfg.AntiIdleKick then applyAntiIdleKick() end
-
-print("[力量之冠封存全能版] 已加载")
