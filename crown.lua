@@ -273,4 +273,559 @@ function TP:StartLoop()
     end)
 end
 
-functi
+function TP:StopLoop()
+    self.Loop = false
+    self.Thread = nil
+end
+
+_G.TP = TP
+
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/download/1.6.66/main.lua"))()
+local Window = WindUI:CreateWindow({
+    Title = "力量之冠封存全能版", Icon = "zap", Author = "力量之冠",
+    Folder = "PowerCrownSave", Theme = "Dark", Transparent = true,
+    Resizable = false, Size = UDim2.fromOffset(460, 780),
+})
+local MainTab = Window:Tab({ Title = "控制面板", Icon = "settings" })
+
+local CommonSection = MainTab:Section({ Title = "公共设置", Icon = "settings" })
+CommonSection:Slider({ Title = "抽蛋间隔 (秒)", Desc = "0.1 最快", Value = { Min = 0.1, Max = 1.0, Default = 0.1 }, Step = 0.05, Callback = function(value) Cfg.EggInterval = value end })
+
+local PetSection = MainTab:Section({ Title = "🐾 宠物区", Icon = "paw" })
+PetSection:Toggle({ Title = "自动抽宠物蛋", Value = false, Callback = function(state) Cfg.AutoPetEgg = state end })
+PetSection:Input({ Title = "宠物蛋名字", Placeholder = "SkyPetEgg", Value = "SkyPetEgg", Callback = function(text) Cfg.PetEggName = text end })
+PetSection:Dropdown({ Title = "宠物蛋数量", Values = {"1", "3"}, Value = "1", Multi = false, Callback = function(selected) local val = tonumber(selected) if val then Cfg.PetEggQty = val end end })
+PetSection:Input({ Title = "宠物蛋单价", Placeholder = "3", Value = "3", Callback = function(text) local val = tonumber(text) if val then Cfg.PetEggPrice = val end end })
+local PetStatus = PetSection:Paragraph({ Title = "宠物区状态", Desc = "待机中..." })
+
+local HaloSection = MainTab:Section({ Title = "✨ 光环区", Icon = "star" })
+HaloSection:Toggle({ Title = "自动抽光环蛋", Value = false, Callback = function(state) Cfg.AutoHaloEgg = state end })
+HaloSection:Input({ Title = "光环蛋名字", Placeholder = "SkyHaloEgg", Value = "SkyHaloEgg", Callback = function(text) Cfg.HaloEggName = text end })
+HaloSection:Dropdown({ Title = "光环蛋数量", Values = {"1", "3"}, Value = "1", Multi = false, Callback = function(selected) local val = tonumber(selected) if val then Cfg.HaloEggQty = val end end })
+HaloSection:Input({ Title = "光环蛋单价", Placeholder = "1", Value = "1", Callback = function(text) local val = tonumber(text) if val then Cfg.HaloEggPrice = val end end })
+local HaloStatus = HaloSection:Paragraph({ Title = "光环区状态", Desc = "待机中..." })
+
+local TrainSection = MainTab:Section({ Title = "🏋️ 自动锻炼", Icon = "activity" })
+TrainSection:Toggle({ Title = "自动锻炼", Value = false, Callback = function(state) Cfg.AutoTrain = state end })
+TrainSection:Dropdown({ Title = "选择动作 (中文)", Values = ActionListCN, Value = "哑铃", Multi = false, Callback = function(selected) local cn = selected local en = ActionMap[cn] if en then Cfg.TrainAction = en Cfg.TrainActionCN = cn end end })
+TrainSection:Slider({ Title = "锻炼间隔 (秒)", Value = { Min = 0.1, Max = 1.0, Default = 0.2 }, Step = 0.05, Callback = function(value) Cfg.TrainInterval = value end })
+local TrainStatus = TrainSection:Paragraph({ Title = "锻炼状态", Desc = "待机中..." })
+
+local FastTrainSection = MainTab:Section({ Title = "⚡ 无间隔锻炼 (全动作轮转)", Icon = "gauge" })
+FastTrainSection:Toggle({ Title = "无间隔自动锻炼", Value = false, Callback = function(state) Cfg.FastTrain = state end })
+FastTrainSection:Dropdown({ Title = "选择动作 (中文)", Values = ActionListCN, Value = "哑铃", Multi = false, Callback = function(selected) local cn = selected local en = ActionMap[cn] if en then Cfg.FastTrainAction = en Cfg.FastTrainActionCN = cn end end })
+FastTrainSection:Paragraph({ Title = "轮转策略", Desc = "依次执行21个动作，每个动作间隔1秒，防止被服务器拦截。" })
+local FastTrainStatus = FastTrainSection:Paragraph({ Title = "极速锻炼状态", Desc = "待机中..." })
+
+local RebirthSection = MainTab:Section({ Title = "💀 自动重生 (限次)", Icon = "refresh-cw" })
+RebirthSection:Toggle({ Title = "自动重生", Value = false, Callback = function(state) Cfg.AutoRebirth = state end })
+RebirthSection:Input({ Title = "初始目标力量", Placeholder = "10000", Value = "10000", Callback = function(text) local val = tonumber(text) if val then Cfg.TargetStrength = val end end })
+RebirthSection:Input({ Title = "每次递增数值", Placeholder = "10000", Value = "10000", Callback = function(text) local val = tonumber(text) if val then Cfg.RebirthInc = val end end })
+RebirthSection:Input({ Title = "目标重生次数", Placeholder = "5", Value = "5", Callback = function(text) local val = tonumber(text) if val then Cfg.TargetRebirthCount = val end end })
+local RebirthStatus = RebirthSection:Paragraph({ Title = "重生状态", Desc = "待机中..." })
+
+local InfiniteSection = MainTab:Section({ Title = "♻️ 无限循环重生", Icon = "repeat" })
+InfiniteSection:Toggle({ Title = "无限循环重生", Value = false, Callback = function(state) Cfg.InfiniteRebirth = state if state then Cfg.AutoRebirth = false end end })
+InfiniteSection:Input({ Title = "基础目标力量", Placeholder = "10000", Value = "10000", Callback = function(text) local val = tonumber(text) if val then Cfg.BaseStrength = val end end })
+local InfiniteStatus = InfiniteSection:Paragraph({ Title = "无限循环状态", Desc = "待机中..." })
+
+local MoveSection = MainTab:Section({ Title = "⚡ 移动与反挂机", Icon = "move" })
+MoveSection:Toggle({ Title = "飞行模式", Value = false, Callback = function(state) Cfg.Fly = state end })
+MoveSection:Slider({ Title = "步行速度", Value = { Min = 16, Max = 500, Default = 16 }, Step = 1, Callback = function(value) Cfg.WalkSpeed = value local char = player.Character if char then local hum = char:FindFirstChildOfClass("Humanoid") if hum then hum.WalkSpeed = value end end end })
+MoveSection:Slider({ Title = "飞行速度", Value = { Min = 10, Max = 500, Default = 50 }, Step = 1, Callback = function(value) Cfg.FlySpeed = value end })
+MoveSection:Toggle({ Title = "反挂机", Value = true, Callback = function(state) Cfg.AntiAfk = state end })
+
+local VisualSection = MainTab:Section({ Title = "场景优化", Icon = "eye" })
+VisualSection:Button({ Title = "灰色建筑模式", Callback = function() applyGrayBuildings() end })
+VisualSection:Button({ Title = "隐藏宠物", Callback = function() hidePets() end })
+VisualSection:Button({ Title = "提高帧率并降低延迟", Callback = function() boostPerformance() end })
+
+local TeleportTab = Window:Tab({ Title = "传送", Icon = "send" })
+local TPSection = TeleportTab:Section({ Title = "传送玩家", Icon = "user" })
+
+local function GetPlayerList()
+    local list = {}
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= player then table.insert(list, p.Name) end
+    end
+    return list
+end
+
+local TPStatus = TPSection:Paragraph({ Title = "传送状态", Desc = "待机中..." })
+local TPDropdown = TPSection:Dropdown({
+    Title = "选择在线玩家", Values = GetPlayerList(), Value = "", Multi = false,
+    Callback = function(selected)
+        if type(selected) == "table" then selected = selected[1] end
+        TP.Target = selected or ""
+        Cfg.TeleportTarget = TP.Target
+    end
+})
+
+TPSection:Button({
+    Title = "刷新玩家列表",
+    Callback = function()
+        local list = GetPlayerList()
+        pcall(function() TPDropdown:Refresh(list) end)
+        TPStatus:SetDesc("已刷新，共 " .. #list .. " 名玩家")
+    end
+})
+
+TPSection:Slider({
+    Title = "传送高度偏移 (Y)", Value = { Min = 0, Max = 20, Default = 3 }, Step = 1,
+    Callback = function(value) Cfg.TeleportOffsetY = value TP.OffsetY = value end
+})
+
+TPSection:Button({
+    Title = "传送到目标玩家",
+    Callback = function()
+        if TP.Target == "" then TPStatus:SetDesc("请先选择玩家") return end
+        local ok = TP:ToTarget()
+        if ok then TPStatus:SetDesc("已传送到 " .. TP.Target) else TPStatus:SetDesc("传送失败：找不到目标或角色") end
+    end
+})
+
+TPSection:Toggle({
+    Title = "循环锁定传送", Value = false,
+    Callback = function(state)
+        if state then
+            if TP.Target == "" then TPStatus:SetDesc("请先选择玩家") return end
+            TP:StartLoop()
+            TPStatus:SetDesc("循环传送中 -> " .. TP.Target)
+        else
+            TP:StopLoop()
+            TPStatus:SetDesc("已停止循环传送")
+        end
+    end
+})
+
+Players.PlayerAdded:Connect(function() task.wait(0.5) pcall(function() TPDropdown:Refresh(GetPlayerList()) end) end)
+Players.PlayerRemoving:Connect(function() task.wait(0.2) pcall(function() TPDropdown:Refresh(GetPlayerList()) end) end)
+
+local ProtectTab = Window:Tab({ Title = "防护", Icon = "shield" })
+local AntiSection = ProtectTab:Section({ Title = "反挂机 / 防踢", Icon = "shield-check" })
+AntiSection:Toggle({
+    Title = "反挂机踢出 (getconnections)", Value = true,
+    Callback = function(state) Cfg.AntiIdleKick = state if state then applyAntiIdleKick() end end
+})
+AntiSection:Toggle({
+    Title = "防客户端踢出", Value = false,
+    Callback = function(state) Cfg.AntiClientKick = state if state then applyAntiClientKick() end end
+})
+
+local GroupSection = ProtectTab:Section({ Title = "群组验证", Icon = "users" })
+GroupSection:Toggle({
+    Title = "绕过群组验证", Value = false,
+    Callback = function(state) Cfg.BypassGroup = state if state then applyBypassGroup() end end
+})
+
+local SG = Instance.new("ScreenGui")
+SG.Name = "PowerCrownUI"
+SG.ResetOnSpawn = false
+SG.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+SG.IgnoreGuiInset = true
+pcall(function() SG.Parent = game:GetService("CoreGui") end)
+if not SG.Parent then SG.Parent = player.PlayerGui end
+
+local DataHUD = Instance.new("Frame")
+DataHUD.Size = UDim2.new(0, 210, 0, 105)
+DataHUD.Position = UDim2.new(0, 20, 0.3, 0)
+DataHUD.BackgroundColor3 = Color3.fromRGB(20, 24, 34)
+DataHUD.BackgroundTransparency = 0.1
+DataHUD.BorderSizePixel = 0
+DataHUD.ZIndex = 500
+DataHUD.Parent = SG
+corner(DataHUD, 10)
+stroke(DataHUD, C.accent, 1.5, 0.2)
+
+local HUDTitle = Instance.new("TextLabel")
+HUDTitle.Size = UDim2.new(1, 0, 0, 24)
+HUDTitle.BackgroundTransparency = 1
+HUDTitle.Text = "📊 力量之冠封存全能版 · 累计总数据"
+HUDTitle.TextColor3 = C.accent
+HUDTitle.Font = Enum.Font.GothamBold
+HUDTitle.TextSize = 12
+HUDTitle.ZIndex = 501
+HUDTitle.Parent = DataHUD
+
+local LabelReps = Instance.new("TextLabel")
+LabelReps.Size = UDim2.new(0.5, -10, 0, 18)
+LabelReps.Position = UDim2.new(0, 10, 0, 30)
+LabelReps.BackgroundTransparency = 1
+LabelReps.Text = "总训练: 0"
+LabelReps.TextColor3 = Color3.fromRGB(230, 230, 235)
+LabelReps.Font = Enum.Font.Gotham
+LabelReps.TextSize = 11
+LabelReps.TextXAlignment = Enum.TextXAlignment.Left
+LabelReps.ZIndex = 501
+LabelReps.Parent = DataHUD
+
+local LabelRebirth = Instance.new("TextLabel")
+LabelRebirth.Size = UDim2.new(0.5, -10, 0, 18)
+LabelRebirth.Position = UDim2.new(0, 10, 0, 50)
+LabelRebirth.BackgroundTransparency = 1
+LabelRebirth.Text = "总转生: 0"
+LabelRebirth.TextColor3 = Color3.fromRGB(230, 230, 235)
+LabelRebirth.Font = Enum.Font.Gotham
+LabelRebirth.TextSize = 11
+LabelRebirth.TextXAlignment = Enum.TextXAlignment.Left
+LabelRebirth.ZIndex = 501
+LabelRebirth.Parent = DataHUD
+
+local LabelTime = Instance.new("TextLabel")
+LabelTime.Size = UDim2.new(1, -20, 0, 18)
+LabelTime.Position = UDim2.new(0, 10, 0, 70)
+LabelTime.BackgroundTransparency = 1
+LabelTime.Text = "总时长: 00:00:00"
+LabelTime.TextColor3 = Color3.fromRGB(230, 230, 235)
+LabelTime.Font = Enum.Font.Gotham
+LabelTime.TextSize = 11
+LabelTime.TextXAlignment = Enum.TextXAlignment.Left
+LabelTime.ZIndex = 501
+LabelTime.Parent = DataHUD
+
+local HUDDrag, HUDStart, HUDOrigin = false, nil, nil
+DataHUD.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        HUDDrag = true
+        HUDStart = input.Position
+        HUDOrigin = DataHUD.Position
+        input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then HUDDrag = false end end)
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if HUDDrag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - HUDStart
+        DataHUD.Position = UDim2.new(HUDOrigin.X.Scale, HUDOrigin.X.Offset + delta.X, HUDOrigin.Y.Scale, HUDOrigin.Y.Offset + delta.Y)
+    end
+end)
+
+local MobileInput = { Forward = false, Back = false, Left = false, Right = false, Up = false, Down = false }
+local FlyControls = Instance.new("Frame")
+FlyControls.Size = UDim2.new(0, 170, 0, 104)
+FlyControls.Position = UDim2.new(0.5, -85, 1, -120)
+FlyControls.BackgroundColor3 = Color3.fromRGB(16, 18, 26)
+FlyControls.BackgroundTransparency = 0.2
+FlyControls.Visible = false
+FlyControls.ZIndex = 30
+FlyControls.Parent = SG
+corner(FlyControls, 8)
+stroke(FlyControls, C.accent, 1.2, 0.3)
+
+local function flyButton(text, x, y, color)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0, 34, 0, 34)
+    b.Position = UDim2.new(0, x, 0, y)
+    b.BackgroundColor3 = Color3.fromRGB(32, 32, 38)
+    b.Text = text
+    b.TextColor3 = color or C.accent
+    b.Font = Enum.Font.GothamBold
+    b.TextSize = 14
+    b.AutoButtonColor = false
+    b.BorderSizePixel = 0
+    b.ZIndex = 31
+    b.Parent = FlyControls
+    corner(b, 6)
+    return b
+end
+local BtnUp = flyButton("▲", 42, 4, C.accent)
+local BtnDown = flyButton("▼", 42, 66, Color3.fromRGB(180, 120, 255))
+local BtnLeft = flyButton("◀", 4, 35, C.accent)
+local BtnRight = flyButton("▶", 80, 35, C.accent)
+local BtnRise = flyButton("＋", 118, 4, C.green)
+local BtnFall = flyButton("－", 118, 66, C.red)
+
+local function bindHold(btn, key)
+    local function set(v)
+        MobileInput[key] = v
+        TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundTransparency = v and 0.6 or 0}):Play()
+    end
+    btn.MouseButton1Down:Connect(function() set(true) end)
+    btn.MouseButton1Up:Connect(function() set(false) end)
+    btn.MouseLeave:Connect(function() set(false) end)
+end
+bindHold(BtnUp, "Forward")
+bindHold(BtnDown, "Back")
+bindHold(BtnLeft, "Left")
+bindHold(BtnRight, "Right")
+bindHold(BtnRise, "Up")
+bindHold(BtnFall, "Down")
+
+local flying, flyBV, flyBG = false, nil, nil
+local startFly, stopFly, applyWalkSpeed
+
+applyWalkSpeed = function()
+    local char = player.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then hum.WalkSpeed = Cfg.WalkSpeed end
+end
+
+startFly = function()
+    if flying then return end
+    local char = player.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum then hum.PlatformStand = true end
+    flyBV = Instance.new("BodyVelocity")
+    flyBV.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+    flyBV.Velocity = Vector3.zero
+    flyBV.Parent = hrp
+    flyBG = Instance.new("BodyGyro")
+    flyBG.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
+    flyBG.P = 3000
+    flyBG.D = 500
+    flyBG.Parent = hrp
+    flying = true
+end
+
+stopFly = function()
+    if not flying then return end
+    flying = false
+    for k in pairs(MobileInput) do MobileInput[k] = false end
+    local char = player.Character
+    if char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then hum.PlatformStand = false end
+    end
+    if flyBV then flyBV:Destroy(); flyBV = nil end
+    if flyBG then flyBG:Destroy(); flyBG = nil end
+    applyWalkSpeed()
+end
+
+RunService.RenderStepped:Connect(function()
+    if not Cfg.Fly then
+        if flying then stopFly() end
+        FlyControls.Visible = false
+        return
+    end
+    FlyControls.Visible = true
+    if not flying then startFly() return end
+    local char = player.Character
+    if not char then stopFly() return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp or not flyBV or not flyBG then return end
+    local cam = workspace.CurrentCamera
+    local dir = Vector3.zero
+    local fwd = UserInputService:IsKeyDown(Enum.KeyCode.W) or MobileInput.Forward
+    local bck = UserInputService:IsKeyDown(Enum.KeyCode.S) or MobileInput.Back
+    local lft = UserInputService:IsKeyDown(Enum.KeyCode.A) or MobileInput.Left
+    local rgt = UserInputService:IsKeyDown(Enum.KeyCode.D) or MobileInput.Right
+    local up = UserInputService:IsKeyDown(Enum.KeyCode.Space) or MobileInput.Up
+    local dn = UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or MobileInput.Down
+    if fwd then dir = dir + cam.CFrame.LookVector end
+    if bck then dir = dir - cam.CFrame.LookVector end
+    if lft then dir = dir - cam.CFrame.RightVector end
+    if rgt then dir = dir + cam.CFrame.RightVector end
+    if up then dir = dir + Vector3.new(0, 1, 0) end
+    if dn then dir = dir - Vector3.new(0, 1, 0) end
+    if dir.Magnitude > 0 then dir = dir.Unit * Cfg.FlySpeed end
+    flyBV.Velocity = dir
+    flyBG.CFrame = CFrame.new(hrp.Position, hrp.Position + cam.CFrame.LookVector)
+end)
+
+player.CharacterAdded:Connect(function(char)
+    task.wait(0.5)
+    applyWalkSpeed()
+    if flying then stopFly() end
+end)
+
+task.spawn(function()
+    local storeEvent
+    pcall(function() storeEvent = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("StoreEvent") end)
+    while true do
+        task.wait(Cfg.EggInterval)
+        if Cfg.AutoPetEgg and storeEvent then
+            pcall(function()
+                storeEvent:FireServer("Egg", Cfg.PetEggQty, Cfg.EggCurrency, Cfg.PetEggName)
+                PetStatus:SetDesc("正在抽: " .. Cfg.PetEggName .. " x" .. Cfg.PetEggQty)
+            end)
+        else
+            PetStatus:SetDesc("待机中")
+        end
+        if Cfg.AutoHaloEgg and storeEvent then
+            pcall(function()
+                storeEvent:FireServer("Egg", Cfg.HaloEggQty, Cfg.EggCurrency, Cfg.HaloEggName)
+                HaloStatus:SetDesc("正在抽: " .. Cfg.HaloEggName .. " x" .. Cfg.HaloEggQty)
+            end)
+        else
+            HaloStatus:SetDesc("待机中")
+        end
+    end
+end)
+
+task.spawn(function()
+    local trainEvent
+    pcall(function() trainEvent = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("TrainEvent") end)
+    while true do
+        task.wait(Cfg.TrainInterval)
+        if Cfg.AutoTrain and trainEvent then
+            pcall(function()
+                trainEvent:FireServer(Cfg.TrainAction)
+                Cfg.TotalReps = Cfg.TotalReps + 1
+                TrainStatus:SetDesc("正在锻炼: " .. Cfg.TrainActionCN)
+            end)
+        else
+            TrainStatus:SetDesc("待机中...")
+        end
+    end
+end)
+
+task.spawn(function()
+    local RS = game:GetService("ReplicatedStorage").Remotes
+    local trainEvent = RS:WaitForChild("TrainEvent", 5)
+
+    local allActions = {
+        "PushUp", "Dumbbell", "ShoulderPress_1", "ShoulderPress_2", "ShoulderPress_3",
+        "TrendMill_1", "FlatBench_1", "FlatBench_L1", "FlatBench_K1", "Rock_1",
+        "Rock_2", "Rock_3", "BarbellRack_L1", "BarbellRack_S1", "BarbellRack_1",
+        "BarbellRack_2", "BenchPress_L1", "BenchPress_1", "BenchPress_2",
+        "Red slime", "SkySlime"
+    }
+
+    local actionIndex = 1
+
+    while true do
+        if Cfg.FastTrain and trainEvent then
+            local currentAction = allActions[actionIndex]
+
+            pcall(function()
+                trainEvent:FireServer(currentAction)
+            end)
+            Cfg.FastTotalReps = Cfg.FastTotalReps + 1
+            Cfg.TotalReps = Cfg.TotalReps + 1
+
+            local char = player.Character
+            if char then
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                local animator = hum and hum:FindFirstChildOfClass("Animator")
+                if animator then
+                    for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+                        track:Stop(0)
+                    end
+                end
+            end
+
+            FastTrainStatus:SetDesc(string.format("全动作轮转中 | 当前动作: %s", currentAction))
+
+            actionIndex = actionIndex + 1
+            if actionIndex > #allActions then actionIndex = 1 end
+        end
+
+        task.wait(1)
+    end
+end)
+
+task.spawn(function()
+    local lastReps, lastTime = 0, tick()
+    while true do
+        task.wait(0.5)
+        if Cfg.FastTrain then
+            local now = tick()
+            local dt = now - lastTime
+            local rate = 0
+            if dt >= 0.5 then
+                rate = math.floor((Cfg.FastTotalReps - lastReps) / dt)
+                lastReps = Cfg.FastTotalReps
+                lastTime = now
+            end
+            FastTrainStatus:SetDesc(string.format("极速: 全动作 | 速率 %d/s | 累计 %d", rate, Cfg.FastTotalReps))
+        else
+            FastTrainStatus:SetDesc("待机中...")
+        end
+    end
+end)
+
+task.spawn(function()
+    local rebirthEvent
+    pcall(function() rebirthEvent = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("RebirthEvent") end)
+    while true do
+        task.wait(Cfg.RebirthCheckInterval)
+        if Cfg.AutoRebirth and rebirthEvent and not Cfg.InfiniteRebirth then
+            pcall(function()
+                local gameRebirths = getCurrentRebirths()
+                if gameRebirths >= Cfg.TargetRebirthCount then
+                    Cfg.AutoRebirth = false
+                    RebirthStatus:SetDesc("已完成 " .. gameRebirths .. " 次重生，已停止")
+                    return
+                end
+                local currentStr = getCurrentStrength()
+                if currentStr >= Cfg.TargetStrength then
+                    rebirthEvent:FireServer("Update")
+                    Cfg.TargetStrength = Cfg.TargetStrength + Cfg.RebirthInc
+                    RebirthStatus:SetDesc("进度: " .. gameRebirths .. "/" .. Cfg.TargetRebirthCount .. " | 目标力量: " .. Cfg.TargetStrength)
+                    task.wait(Cfg.RebirthCooldown)
+                else
+                    RebirthStatus:SetDesc("力量: " .. math.floor(currentStr) .. "/" .. Cfg.TargetStrength .. " | 重生: " .. gameRebirths .. "/" .. Cfg.TargetRebirthCount)
+                end
+            end)
+        end
+    end
+end)
+
+task.spawn(function()
+    local rebirthEvent
+    pcall(function() rebirthEvent = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("RebirthEvent") end)
+    while true do
+        task.wait(Cfg.RebirthCheckInterval)
+        if Cfg.InfiniteRebirth and rebirthEvent then
+            pcall(function()
+                local currentStr = getCurrentStrength()
+                local gameRebirths = getCurrentRebirths()
+                if currentStr >= Cfg.BaseStrength then
+                    rebirthEvent:FireServer("Update")
+                    InfiniteStatus:SetDesc("正在重生... 已重生 " .. gameRebirths .. " 次")
+                    task.wait(Cfg.RebirthCooldown)
+                else
+                    InfiniteStatus:SetDesc("力量: " .. math.floor(currentStr) .. "/" .. Cfg.BaseStrength .. " | 已重生: " .. gameRebirths .. " 次")
+                end
+            end)
+        else
+            InfiniteStatus:SetDesc("待机中...")
+        end
+    end
+end)
+
+task.spawn(function()
+    while true do
+        task.wait(60)
+        if Cfg.AntiAfk then
+            pcall(function()
+                local VirtualInputManager = game:GetService("VirtualInputManager")
+                VirtualInputManager:SendKeyEvent(Enum.KeyCode.Space, true, false, game)
+                task.wait(0.05)
+                VirtualInputManager:SendKeyEvent(Enum.KeyCode.Space, false, false, game)
+            end)
+        end
+    end
+end)
+
+task.spawn(function()
+    while true do
+        local elapsedTime = tick() - Cfg.ScriptStartTime
+        local hours = math.floor(elapsedTime / 3600)
+        local mins = math.floor((elapsedTime % 3600) / 60)
+        local secs = math.floor(elapsedTime % 60)
+        LabelReps.Text = "总训练: " .. fmt(Cfg.TotalReps)
+        LabelRebirth.Text = "总转生: " .. fmt(getCurrentRebirths())
+        LabelTime.Text = "总时长: " .. string.format("%02d:%02d:%02d", hours, mins, secs)
+        task.wait(0.5)
+    end
+end)
+
+player.Idled:Connect(function()
+    if Cfg.AntiAfk then
+        pcall(function()
+            local VirtualInputManager = game:GetService("VirtualInputManager")
+            VirtualInputManager:SendKeyEvent(Enum.KeyCode.Space, true, false, game)
+            task.wait(0.05)
+            VirtualInputManager:SendKeyEvent(Enum.KeyCode.Space, false, false, game)
+        end)
+    end
+end)
+
+applyWalkSpeed()
+if Cfg.AntiIdleKick then applyAntiIdleKick() end
+
+print("[力量之冠封存全能版]")
