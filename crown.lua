@@ -24,7 +24,7 @@ local Cfg = {
     EggCurrency = "Gem", EggInterval = 0.1,
     AutoTrain = false, TrainAction = "Dumbbell", TrainActionCN = "哑铃", TrainInterval = 0.2,
     FastTrain = false, FastTrainAction = "Dumbbell", FastTrainActionCN = "哑铃",
-    FastPerBeat = 1, FastMaxPerSecond = 0, FastTotalReps = 0,
+    FastPerBeat = 20, FastInterval = 0.1, FastTotalReps = 0,
     AutoRebirth = false, TargetStrength = 10000, RebirthInc = 10000, TargetRebirthCount = 5,
     RebirthCheckInterval = 0.1, RebirthCooldown = 0.1,
     InfiniteRebirth = false, BaseStrength = 10000,
@@ -104,10 +104,7 @@ local function getCurrentRebirths()
 end
 
 local function applyAntiIdleKick()
-    if not getconnections then
-        warn("[反挂机-kick] 当前执行器不支持 getconnections")
-        return
-    end
+    if not getconnections then return end
     pcall(function()
         for _, conn in next, getconnections(player.Idled) do
             pcall(function() conn:Disable() end)
@@ -117,10 +114,7 @@ local function applyAntiIdleKick()
 end
 
 local function applyAntiClientKick()
-    if not getgc then
-        warn("[防踢] 当前执行器不支持 getgc")
-        return
-    end
+    if not getgc then return end
     pcall(function()
         for _, Value in next, getgc(true) do
             if typeof(Value) == "table" then
@@ -133,10 +127,7 @@ local function applyAntiClientKick()
 end
 
 local function applyBypassGroup()
-    if not hookmetamethod or not hookfunction then
-        warn("[绕过群组] 当前执行器不支持 hookmetamethod / hookfunction")
-        return
-    end
+    if not hookmetamethod or not hookfunction then return end
     pcall(function()
         local clonerefFunc = cloneref or function(o) return o end
         local getnamecallmethod = getnamecallmethod
@@ -227,30 +218,18 @@ local function boostPerformance()
         Lighting.ClockTime = 12
     end)
     for _, v in ipairs(Lighting:GetChildren()) do
-        if v:IsA("PostEffect") then
-            v:Destroy()
-        end
+        if v:IsA("PostEffect") then v:Destroy() end
     end
     for _, v in ipairs(workspace:GetDescendants()) do
         if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") then
             v.Enabled = false
         end
-        if v:IsA("Beam") then
-            v.Enabled = false
-        end
-        if v:IsA("Texture") or v:IsA("Decal") then
-            v.Transparency = 1
-        end
-        if v:IsA("SurfaceAppearance") then
-            v:Destroy()
-        end
+        if v:IsA("Beam") then v.Enabled = false end
+        if v:IsA("Texture") or v:IsA("Decal") then v.Transparency = 1 end
+        if v:IsA("SurfaceAppearance") then v:Destroy() end
     end
-    pcall(function()
-        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-    end)
-    pcall(function()
-        collectgarbage()
-    end)
+    pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
+    pcall(function() collectgarbage() end)
 end
 
 local TP = {
@@ -275,12 +254,10 @@ function TP:ToTarget()
     if not char then return false end
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return false end
-
     local target = Players:FindFirstChild(self.Target)
     if not target or not target.Character then return false end
     local targetHrp = target.Character:FindFirstChild("HumanoidRootPart")
     if not targetHrp then return false end
-
     hrp.CFrame = targetHrp.CFrame + Vector3.new(0, self.OffsetY, 0)
     return true
 end
@@ -337,8 +314,8 @@ local TrainStatus = TrainSection:Paragraph({ Title = "锻炼状态", Desc = "待
 local FastTrainSection = MainTab:Section({ Title = "⚡ 无间隔锻炼 (极速)", Icon = "gauge" })
 FastTrainSection:Toggle({ Title = "无间隔自动锻炼", Value = false, Callback = function(state) Cfg.FastTrain = state end })
 FastTrainSection:Dropdown({ Title = "选择动作 (中文)", Values = ActionListCN, Value = "哑铃", Multi = false, Callback = function(selected) local cn = selected local en = ActionMap[cn] if en then Cfg.FastTrainAction = en Cfg.FastTrainActionCN = cn end end })
-FastTrainSection:Slider({ Title = "每帧触发次数", Desc = "1=每帧1次 (≈60次/秒)", Value = { Min = 1, Max = 10, Default = 1 }, Step = 1, Callback = function(value) Cfg.FastPerBeat = value end })
-FastTrainSection:Slider({ Title = "每秒上限 (0=不限)", Desc = "防踢设置", Value = { Min = 0, Max = 100, Default = 0 }, Step = 5, Callback = function(value) Cfg.FastMaxPerSecond = value end })
+FastTrainSection:Slider({ Title = "每次连发次数", Desc = "瞬间连续触发次数", Value = { Min = 1, Max = 100, Default = 20 }, Step = 1, Callback = function(value) Cfg.FastPerBeat = value end })
+FastTrainSection:Slider({ Title = "连发间隔 (秒)", Desc = "每组连发之间的停顿", Value = { Min = 0.01, Max = 1.0, Default = 0.1 }, Step = 0.01, Callback = function(value) Cfg.FastInterval = value end })
 local FastTrainStatus = FastTrainSection:Paragraph({ Title = "极速锻炼状态", Desc = "待机中..." })
 
 local RebirthSection = MainTab:Section({ Title = "💀 自动重生 (限次)", Icon = "refresh-cw" })
@@ -758,30 +735,19 @@ end)
 
 task.spawn(function()
     local fastTrainEvent
-    pcall(function() fastTrainEvent = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("TrainEvent") end)
-    local beatCount, windowStart = 0, tick()
-    RunService.Heartbeat:Connect(function()
-        if not Cfg.FastTrain or not fastTrainEvent then
-            beatCount = 0
-            windowStart = tick()
-            return
-        end
-        if tick() - windowStart >= 1 then
-            windowStart = tick()
-            beatCount = 0
-        end
-        for _ = 1, Cfg.FastPerBeat do
-            if Cfg.FastMaxPerSecond > 0 and beatCount >= Cfg.FastMaxPerSecond then break end
-            local ok = pcall(function() fastTrainEvent:FireServer(Cfg.FastTrainAction) end)
-            if ok then
+    pcall(function() fastTrainEvent = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("TrainEvent", 5) end)
+    while SG.Parent do
+        if Cfg.FastTrain and fastTrainEvent then
+            for i = 1, Cfg.FastPerBeat do
+                pcall(function()
+                    fastTrainEvent:FireServer(Cfg.FastTrainAction)
+                end)
                 Cfg.FastTotalReps = Cfg.FastTotalReps + 1
                 Cfg.TotalReps = Cfg.TotalReps + 1
-                beatCount = beatCount + 1
-            else
-                break
             end
         end
-    end)
+        task.wait(Cfg.FastInterval)
+    end
 end)
 
 task.spawn(function()
