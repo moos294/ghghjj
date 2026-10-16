@@ -23,8 +23,7 @@ local Cfg = {
     AutoHaloEgg = false, HaloEggName = "SkyHaloEgg", HaloEggPrice = 1, HaloEggQty = 1,
     EggCurrency = "Gem", EggInterval = 0.1,
     AutoTrain = false, TrainAction = "Dumbbell", TrainActionCN = "哑铃", TrainInterval = 0.2,
-    FastTrain = false, FastTrainAction = "Dumbbell", FastTrainActionCN = "哑铃",
-    FastPerBeat = 1, FastInterval = 0.1, FastTotalReps = 0,
+    FastTrain = false, FastTotalReps = 0,
     AutoRebirth = false, TargetStrength = 10000, RebirthInc = 10000, TargetRebirthCount = 5,
     RebirthCheckInterval = 0.1, RebirthCooldown = 0.1,
     InfiniteRebirth = false, BaseStrength = 10000,
@@ -232,23 +231,14 @@ local function boostPerformance()
     pcall(function() collectgarbage() end)
 end
 
-local TP = {
-    Target = "",
-    Loop = false,
-    OffsetY = 3,
-    Thread = nil,
-}
-
+local TP = { Target = "", Loop = false, OffsetY = 3, Thread = nil }
 function TP:GetPlayerList(includeLocal)
     local list = {}
     for _, p in ipairs(Players:GetPlayers()) do
-        if includeLocal or p ~= player then
-            table.insert(list, p.Name)
-        end
+        if includeLocal or p ~= player then table.insert(list, p.Name) end
     end
     return list
 end
-
 function TP:ToTarget()
     local char = player.Character
     if not char then return false end
@@ -261,23 +251,17 @@ function TP:ToTarget()
     hrp.CFrame = targetHrp.CFrame + Vector3.new(0, self.OffsetY, 0)
     return true
 end
-
 function TP:StartLoop()
     if self.Loop then return end
     self.Loop = true
     self.Thread = task.spawn(function()
-        while self.Loop do
-            self:ToTarget()
-            task.wait()
-        end
+        while self.Loop do self:ToTarget(); task.wait() end
     end)
 end
-
 function TP:StopLoop()
     self.Loop = false
     self.Thread = nil
 end
-
 _G.TP = TP
 
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/download/1.6.66/main.lua"))()
@@ -313,8 +297,7 @@ local TrainStatus = TrainSection:Paragraph({ Title = "锻炼状态", Desc = "待
 
 local FastTrainSection = MainTab:Section({ Title = "⚡ 无间隔锻炼 (全动作轮转)", Icon = "gauge" })
 FastTrainSection:Toggle({ Title = "无间隔自动锻炼", Value = false, Callback = function(state) Cfg.FastTrain = state end })
-FastTrainSection:Dropdown({ Title = "选择动作 (中文)", Values = ActionListCN, Value = "哑铃", Multi = false, Callback = function(selected) local cn = selected local en = ActionMap[cn] if en then Cfg.FastTrainAction = en Cfg.FastTrainActionCN = cn end end })
-FastTrainSection:Paragraph({ Title = "轮转策略", Desc = "依次执行21个动作，每个动作间隔1秒，防止被服务器拦截。" })
+FastTrainSection:Paragraph({ Title = "轮转策略", Desc = "依次执行动作，每个动作间隔1秒，防止被服务器拦截。" })
 local FastTrainStatus = FastTrainSection:Paragraph({ Title = "极速锻炼状态", Desc = "待机中..." })
 
 local RebirthSection = MainTab:Section({ Title = "💀 自动重生 (限次)", Icon = "refresh-cw" })
@@ -342,7 +325,6 @@ VisualSection:Button({ Title = "提高帧率并降低延迟", Callback = functio
 
 local TeleportTab = Window:Tab({ Title = "传送", Icon = "send" })
 local TPSection = TeleportTab:Section({ Title = "传送玩家", Icon = "user" })
-
 local function GetPlayerList()
     local list = {}
     for _, p in ipairs(Players:GetPlayers()) do
@@ -350,7 +332,6 @@ local function GetPlayerList()
     end
     return list
 end
-
 local TPStatus = TPSection:Paragraph({ Title = "传送状态", Desc = "待机中..." })
 local TPDropdown = TPSection:Dropdown({
     Title = "选择在线玩家", Values = GetPlayerList(), Value = "", Multi = false,
@@ -360,21 +341,8 @@ local TPDropdown = TPSection:Dropdown({
         Cfg.TeleportTarget = TP.Target
     end
 })
-
-TPSection:Button({
-    Title = "刷新玩家列表",
-    Callback = function()
-        local list = GetPlayerList()
-        pcall(function() TPDropdown:Refresh(list) end)
-        TPStatus:SetDesc("已刷新，共 " .. #list .. " 名玩家")
-    end
-})
-
-TPSection:Slider({
-    Title = "传送高度偏移 (Y)", Value = { Min = 0, Max = 20, Default = 3 }, Step = 1,
-    Callback = function(value) Cfg.TeleportOffsetY = value TP.OffsetY = value end
-})
-
+TPSection:Button({ Title = "刷新玩家列表", Callback = function() local list = GetPlayerList(); pcall(function() TPDropdown:Refresh(list) end); TPStatus:SetDesc("已刷新，共 " .. #list .. " 名玩家") end })
+TPSection:Slider({ Title = "传送高度偏移 (Y)", Value = { Min = 0, Max = 20, Default = 3 }, Step = 1, Callback = function(value) Cfg.TeleportOffsetY = value TP.OffsetY = value end })
 TPSection:Button({
     Title = "传送到目标玩家",
     Callback = function()
@@ -383,7 +351,6 @@ TPSection:Button({
         if ok then TPStatus:SetDesc("已传送到 " .. TP.Target) else TPStatus:SetDesc("传送失败：找不到目标或角色") end
     end
 })
-
 TPSection:Toggle({
     Title = "循环锁定传送", Value = false,
     Callback = function(state)
@@ -397,26 +364,15 @@ TPSection:Toggle({
         end
     end
 })
-
 Players.PlayerAdded:Connect(function() task.wait(0.5) pcall(function() TPDropdown:Refresh(GetPlayerList()) end) end)
 Players.PlayerRemoving:Connect(function() task.wait(0.2) pcall(function() TPDropdown:Refresh(GetPlayerList()) end) end)
 
 local ProtectTab = Window:Tab({ Title = "防护", Icon = "shield" })
 local AntiSection = ProtectTab:Section({ Title = "反挂机 / 防踢", Icon = "shield-check" })
-AntiSection:Toggle({
-    Title = "反挂机踢出 (getconnections)", Value = true,
-    Callback = function(state) Cfg.AntiIdleKick = state if state then applyAntiIdleKick() end end
-})
-AntiSection:Toggle({
-    Title = "防客户端踢出", Value = false,
-    Callback = function(state) Cfg.AntiClientKick = state if state then applyAntiClientKick() end end
-})
-
+AntiSection:Toggle({ Title = "反挂机踢出 (getconnections)", Value = true, Callback = function(state) Cfg.AntiIdleKick = state if state then applyAntiIdleKick() end end })
+AntiSection:Toggle({ Title = "防客户端踢出", Value = false, Callback = function(state) Cfg.AntiClientKick = state if state then applyAntiClientKick() end end })
 local GroupSection = ProtectTab:Section({ Title = "群组验证", Icon = "users" })
-GroupSection:Toggle({
-    Title = "绕过群组验证", Value = false,
-    Callback = function(state) Cfg.BypassGroup = state if state then applyBypassGroup() end end
-})
+GroupSection:Toggle({ Title = "绕过群组验证", Value = false, Callback = function(state) Cfg.BypassGroup = state if state then applyBypassGroup() end end })
 
 local SG = Instance.new("ScreenGui")
 SG.Name = "PowerCrownUI"
@@ -436,7 +392,6 @@ DataHUD.ZIndex = 500
 DataHUD.Parent = SG
 corner(DataHUD, 10)
 stroke(DataHUD, C.accent, 1.5, 0.2)
-
 local HUDTitle = Instance.new("TextLabel")
 HUDTitle.Size = UDim2.new(1, 0, 0, 24)
 HUDTitle.BackgroundTransparency = 1
@@ -446,7 +401,6 @@ HUDTitle.Font = Enum.Font.GothamBold
 HUDTitle.TextSize = 12
 HUDTitle.ZIndex = 501
 HUDTitle.Parent = DataHUD
-
 local LabelReps = Instance.new("TextLabel")
 LabelReps.Size = UDim2.new(0.5, -10, 0, 18)
 LabelReps.Position = UDim2.new(0, 10, 0, 30)
@@ -458,7 +412,6 @@ LabelReps.TextSize = 11
 LabelReps.TextXAlignment = Enum.TextXAlignment.Left
 LabelReps.ZIndex = 501
 LabelReps.Parent = DataHUD
-
 local LabelRebirth = Instance.new("TextLabel")
 LabelRebirth.Size = UDim2.new(0.5, -10, 0, 18)
 LabelRebirth.Position = UDim2.new(0, 10, 0, 50)
@@ -470,7 +423,6 @@ LabelRebirth.TextSize = 11
 LabelRebirth.TextXAlignment = Enum.TextXAlignment.Left
 LabelRebirth.ZIndex = 501
 LabelRebirth.Parent = DataHUD
-
 local LabelTime = Instance.new("TextLabel")
 LabelTime.Size = UDim2.new(1, -20, 0, 18)
 LabelTime.Position = UDim2.new(0, 10, 0, 70)
@@ -482,7 +434,6 @@ LabelTime.TextSize = 11
 LabelTime.TextXAlignment = Enum.TextXAlignment.Left
 LabelTime.ZIndex = 501
 LabelTime.Parent = DataHUD
-
 local HUDDrag, HUDStart, HUDOrigin = false, nil, nil
 DataHUD.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -510,7 +461,6 @@ FlyControls.ZIndex = 30
 FlyControls.Parent = SG
 corner(FlyControls, 8)
 stroke(FlyControls, C.accent, 1.2, 0.3)
-
 local function flyButton(text, x, y, color)
     local b = Instance.new("TextButton")
     b.Size = UDim2.new(0, 34, 0, 34)
@@ -533,7 +483,6 @@ local BtnLeft = flyButton("◀", 4, 35, C.accent)
 local BtnRight = flyButton("▶", 80, 35, C.accent)
 local BtnRise = flyButton("＋", 118, 4, C.green)
 local BtnFall = flyButton("－", 118, 66, C.red)
-
 local function bindHold(btn, key)
     local function set(v)
         MobileInput[key] = v
@@ -552,14 +501,12 @@ bindHold(BtnFall, "Down")
 
 local flying, flyBV, flyBG = false, nil, nil
 local startFly, stopFly, applyWalkSpeed
-
 applyWalkSpeed = function()
     local char = player.Character
     if not char then return end
     local hum = char:FindFirstChildOfClass("Humanoid")
     if hum then hum.WalkSpeed = Cfg.WalkSpeed end
 end
-
 startFly = function()
     if flying then return end
     local char = player.Character
@@ -579,7 +526,6 @@ startFly = function()
     flyBG.Parent = hrp
     flying = true
 end
-
 stopFly = function()
     if not flying then return end
     flying = false
@@ -593,7 +539,6 @@ stopFly = function()
     if flyBG then flyBG:Destroy(); flyBG = nil end
     applyWalkSpeed()
 end
-
 RunService.RenderStepped:Connect(function()
     if not Cfg.Fly then
         if flying then stopFly() end
@@ -624,7 +569,6 @@ RunService.RenderStepped:Connect(function()
     flyBV.Velocity = dir
     flyBG.CFrame = CFrame.new(hrp.Position, hrp.Position + cam.CFrame.LookVector)
 end)
-
 player.CharacterAdded:Connect(function(char)
     task.wait(0.5)
     applyWalkSpeed()
@@ -675,7 +619,6 @@ end)
 task.spawn(function()
     local RS = game:GetService("ReplicatedStorage").Remotes
     local trainEvent = RS:WaitForChild("TrainEvent", 5)
-
     local allActions = {
         "PushUp", "Dumbbell", "ShoulderPress_1", "ShoulderPress_2", "ShoulderPress_3",
         "TrendMill_1", "FlatBench_1", "FlatBench_L1", "FlatBench_K1", "Rock_1",
@@ -683,19 +626,15 @@ task.spawn(function()
         "BarbellRack_2", "BenchPress_L1", "BenchPress_1", "BenchPress_2",
         "Red slime", "SkySlime"
     }
-
     local actionIndex = 1
-
     while true do
         if Cfg.FastTrain and trainEvent then
             local currentAction = allActions[actionIndex]
-
             pcall(function()
                 trainEvent:FireServer(currentAction)
             end)
             Cfg.FastTotalReps = Cfg.FastTotalReps + 1
             Cfg.TotalReps = Cfg.TotalReps + 1
-
             local char = player.Character
             if char then
                 local hum = char:FindFirstChildOfClass("Humanoid")
@@ -706,34 +645,11 @@ task.spawn(function()
                     end
                 end
             end
-
             FastTrainStatus:SetDesc(string.format("全动作轮转中 | 当前动作: %s", currentAction))
-
             actionIndex = actionIndex + 1
             if actionIndex > #allActions then actionIndex = 1 end
         end
-
         task.wait(1)
-    end
-end)
-
-task.spawn(function()
-    local lastReps, lastTime = 0, tick()
-    while true do
-        task.wait(0.5)
-        if Cfg.FastTrain then
-            local now = tick()
-            local dt = now - lastTime
-            local rate = 0
-            if dt >= 0.5 then
-                rate = math.floor((Cfg.FastTotalReps - lastReps) / dt)
-                lastReps = Cfg.FastTotalReps
-                lastTime = now
-            end
-            FastTrainStatus:SetDesc(string.format("极速: 全动作 | 速率 %d/s | 累计 %d", rate, Cfg.FastTotalReps))
-        else
-            FastTrainStatus:SetDesc("待机中...")
-        end
     end
 end)
 
