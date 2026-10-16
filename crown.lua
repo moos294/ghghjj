@@ -8,9 +8,13 @@ local Lighting = game:GetService("Lighting")
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 
-local CoreGui = game:GetService("CoreGui")
-local oldUI = CoreGui:FindFirstChild("PowerCrownUI")
-if oldUI then oldUI:Destroy() end
+task.spawn(function()
+    pcall(function()
+        local CoreGui = game:GetService("CoreGui")
+        local oldUI = CoreGui:FindFirstChild("PowerCrownUI")
+        if oldUI then oldUI:Destroy() end
+    end)
+end)
 
 local WindUI
 local success, err = pcall(function()
@@ -56,13 +60,8 @@ local Cfg = {
     TotalReps = 0, AutoRebirthDone = 0, ScriptStartTime = tick(),
     TeleportTarget = "", TeleportLoop = false, TeleportOffsetY = 3,
     AntiIdleKick = true, AntiClientKick = false, BypassGroup = false,
-
-    RailgunKeyBind = true,
-    RailgunCooldown = 1.2,
-    RailgunCraterRadius = 25,
-    RailgunDebrisCount = 25,
-    RailgunShakeIntensity = 5,
-    RailgunShakeDuration = 2,
+    RailgunKeyBind = true, RailgunCooldown = 1.2, RailgunCraterRadius = 25,
+    RailgunDebrisCount = 25, RailgunShakeIntensity = 5, RailgunShakeDuration = 2,
 }
 
 local C = {
@@ -170,9 +169,7 @@ local function applyBypassGroup()
             end
             return true
         end)
-        hookfunction(Speaker.IsInGroup, function(self, ...)
-            return true
-        end)
+        hookfunction(Speaker.IsInGroup, function(self, ...) return true end)
     end)
 end
 
@@ -181,18 +178,12 @@ local function applyGrayBuildings()
         if obj:IsA("BasePart") then
             local isCharacter = false
             for _, plr in ipairs(Players:GetPlayers()) do
-                if plr.Character and obj:IsDescendantOf(plr.Character) then
-                    isCharacter = true
-                    break
-                end
+                if plr.Character and obj:IsDescendantOf(plr.Character) then isCharacter = true break end
             end
             local isPet = false
             local parent = obj.Parent
             while parent and parent ~= workspace do
-                if parent.Name:lower():find("pet") or parent.Name:lower():find("宠物") then
-                    isPet = true
-                    break
-                end
+                if parent.Name:lower():find("pet") or parent.Name:lower():find("宠物") then isPet = true break end
                 parent = parent.Parent
             end
             if not isCharacter and not isPet then
@@ -200,9 +191,7 @@ local function applyGrayBuildings()
                 obj.Color = Color3.fromRGB(128, 128, 128)
                 obj.Reflectance = 0
                 for _, child in ipairs(obj:GetChildren()) do
-                    if child:IsA("Texture") or child:IsA("Decal") or child:IsA("SurfaceAppearance") then
-                        child:Destroy()
-                    end
+                    if child:IsA("Texture") or child:IsA("Decal") or child:IsA("SurfaceAppearance") then child:Destroy() end
                 end
             end
         end
@@ -216,9 +205,7 @@ local function hidePets()
             for _, obj in ipairs(char:GetChildren()) do
                 if obj:IsA("Model") and (obj.Name:lower():find("pet") or obj.Name:lower():find("宠物")) then
                     for _, part in ipairs(obj:GetDescendants()) do
-                        if part:IsA("BasePart") then
-                            part.Transparency = 1
-                        end
+                        if part:IsA("BasePart") then part.Transparency = 1 end
                     end
                 end
             end
@@ -227,9 +214,7 @@ local function hidePets()
     for _, obj in ipairs(workspace:GetDescendants()) do
         if obj:IsA("Model") and (obj.Name:lower():find("pet") or obj.Name:lower():find("宠物")) then
             for _, part in ipairs(obj:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.Transparency = 1
-                end
+                if part:IsA("BasePart") then part.Transparency = 1 end
             end
         end
     end
@@ -246,45 +231,24 @@ local function boostPerformance()
         Lighting.ClockTime = 12
     end)
     for _, v in ipairs(Lighting:GetChildren()) do
-        if v:IsA("PostEffect") then
-            v:Destroy()
-        end
+        if v:IsA("PostEffect") then v:Destroy() end
     end
     for _, v in ipairs(workspace:GetDescendants()) do
-        if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") then
-            v.Enabled = false
-        end
-        if v:IsA("Beam") then
-            v.Enabled = false
-        end
-        if v:IsA("Texture") or v:IsA("Decal") then
-            v.Transparency = 1
-        end
-        if v:IsA("SurfaceAppearance") then
-            v:Destroy()
-        end
+        if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") then v.Enabled = false end
+        if v:IsA("Beam") then v.Enabled = false end
+        if v:IsA("Texture") or v:IsA("Decal") then v.Transparency = 1 end
+        if v:IsA("SurfaceAppearance") then v:Destroy() end
     end
-    pcall(function()
-        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-    end)
-    pcall(function()
-        collectgarbage()
-    end)
+    pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
+    pcall(function() collectgarbage() end)
 end
 
-local TP = {
-    Target = "",
-    Loop = false,
-    OffsetY = 3,
-    Thread = nil,
-}
+local TP = { Target = "", Loop = false, OffsetY = 3, Thread = nil }
 
 function TP:GetPlayerList(includeLocal)
     local list = {}
     for _, p in ipairs(Players:GetPlayers()) do
-        if includeLocal or p ~= player then
-            table.insert(list, p.Name)
-        end
+        if includeLocal or p ~= player then table.insert(list, p.Name) end
     end
     return list
 end
@@ -341,55 +305,54 @@ local isTargeting = false
 local targetMarker = nil
 
 local originalLighting = {
-    Ambient = Lighting.Ambient,
-    OutdoorAmbient = Lighting.OutdoorAmbient,
-    Brightness = Lighting.Brightness,
-    ClockTime = Lighting.ClockTime,
-    FogColor = Lighting.FogColor,
-    FogEnd = Lighting.FogEnd
+    Ambient = Lighting.Ambient, OutdoorAmbient = Lighting.OutdoorAmbient,
+    Brightness = Lighting.Brightness, ClockTime = Lighting.ClockTime,
+    FogColor = Lighting.FogColor, FogEnd = Lighting.FogEnd
 }
 
 local function setDoomsdaySky(active)
-    if active then
-        local cc = Lighting:FindFirstChild("DoomsdayCC") or Instance.new("ColorCorrectionEffect")
-        cc.Name = "DoomsdayCC"
-        cc.TintColor = Color3.fromRGB(255, 60, 60)
-        cc.Contrast = 0.4
-        cc.Saturation = -0.1
-        cc.Parent = Lighting
-        
-        local atm = Lighting:FindFirstChild("DoomsdayAtm") or Instance.new("Atmosphere")
-        atm.Name = "DoomsdayAtm"
-        atm.Density = 0.5
-        atm.Color = Color3.fromRGB(180, 20, 20)
-        atm.Decay = Color3.fromRGB(120, 0, 0)
-        atm.Glare = 0.2
-        atm.Haze = 1.5
-        atm.Parent = Lighting
-        
-        TweenService:Create(Lighting, TweenInfo.new(1.5), {
-            Ambient = Color3.fromRGB(100, 10, 10),
-            OutdoorAmbient = Color3.fromRGB(120, 20, 20),
-            Brightness = 0.8,
-            ClockTime = 0,
-            FogColor = Color3.fromRGB(150, 0, 0),
-            FogEnd = 600
-        }):Play()
-    else
-        local cc = Lighting:FindFirstChild("DoomsdayCC")
-        if cc then cc:Destroy() end
-        local atm = Lighting:FindFirstChild("DoomsdayAtm")
-        if atm then atm:Destroy() end
-        
-        TweenService:Create(Lighting, TweenInfo.new(2), {
-            Ambient = originalLighting.Ambient,
-            OutdoorAmbient = originalLighting.OutdoorAmbient,
-            Brightness = originalLighting.Brightness,
-            ClockTime = originalLighting.ClockTime,
-            FogColor = originalLighting.FogColor,
-            FogEnd = originalLighting.FogEnd
-        }):Play()
-    end
+    pcall(function()
+        if active then
+            local cc = Lighting:FindFirstChild("DoomsdayCC") or Instance.new("ColorCorrectionEffect")
+            cc.Name = "DoomsdayCC"
+            cc.TintColor = Color3.fromRGB(255, 60, 60)
+            cc.Contrast = 0.4
+            cc.Saturation = -0.1
+            cc.Parent = Lighting
+            
+            local atm = Lighting:FindFirstChild("DoomsdayAtm") or Instance.new("Atmosphere")
+            atm.Name = "DoomsdayAtm"
+            atm.Density = 0.5
+            atm.Color = Color3.fromRGB(180, 20, 20)
+            atm.Decay = Color3.fromRGB(120, 0, 0)
+            atm.Glare = 0.2
+            atm.Haze = 1.5
+            atm.Parent = Lighting
+            
+            TweenService:Create(Lighting, TweenInfo.new(1.5), {
+                Ambient = Color3.fromRGB(100, 10, 10),
+                OutdoorAmbient = Color3.fromRGB(120, 20, 20),
+                Brightness = 0.8,
+                ClockTime = 0,
+                FogColor = Color3.fromRGB(150, 0, 0),
+                FogEnd = 600
+            }):Play()
+        else
+            local cc = Lighting:FindFirstChild("DoomsdayCC")
+            if cc then cc:Destroy() end
+            local atm = Lighting:FindFirstChild("DoomsdayAtm")
+            if atm then atm:Destroy() end
+            
+            TweenService:Create(Lighting, TweenInfo.new(2), {
+                Ambient = originalLighting.Ambient,
+                OutdoorAmbient = originalLighting.OutdoorAmbient,
+                Brightness = originalLighting.Brightness,
+                ClockTime = originalLighting.ClockTime,
+                FogColor = originalLighting.FogColor,
+                FogEnd = originalLighting.FogEnd
+            }):Play()
+        end
+    end)
 end
 
 local function createChargingOrb(position)
@@ -441,6 +404,43 @@ local function createLaserFromSky(targetPos)
             Debris:AddItem(laser, 1)
         end
     end)
+end
+
+local function spawnRailgunDebris(hitPosition)
+    for i = 1, Cfg.RailgunDebrisCount do
+        local size = math.random(10, 30) / 10
+        local rock = Instance.new("Part")
+        rock.Shape = Enum.PartType.Block
+        rock.Material = Enum.Material.Slate
+        rock.Color = Color3.fromRGB(60, 60, 60)
+        rock.Size = Vector3.new(size, size, size)
+        rock.Anchored = false
+        rock.CanCollide = true
+        rock.CanQuery = false
+        
+        rock.Position = hitPosition + Vector3.new(
+            math.random(-5, 5),
+            math.random(5, 10),
+            math.random(-5, 5)
+        )
+        rock.CFrame = CFrame.new(rock.Position) * CFrame.Angles(
+            math.random() * math.pi * 2,
+            math.random() * math.pi * 2,
+            math.random() * math.pi * 2
+        )
+        rock.Parent = workspace
+
+        rock.AssemblyLinearVelocity = Vector3.new(
+            math.random(-60, 60),
+            math.random(50, 80),
+            math.random(-60, 60)
+        )
+        rock.AssemblyAngularVelocity = Vector3.new(
+            math.random(-30, 30), math.random(-30, 30), math.random(-30, 30)
+        )
+
+        Debris:AddItem(rock, 10)
+    end
 end
 
 local function createFinalExplosion(hitPosition)
@@ -518,7 +518,6 @@ local function createFinalExplosion(hitPosition)
 end
 
 local function screenShake(intensity, duration)
-    if not Cfg.RailgunShake then return end
     local char = player.Character
     if not char then return end
     local hum = char:FindFirstChildOfClass("Humanoid")
@@ -556,51 +555,15 @@ local function executeRailgunStrike(targetPos)
         
         setDoomsdaySky(true)
         createLaserFromSky(targetPos)
-        screenShake(15, 2)
+        screenShake(Cfg.RailgunShakeIntensity, Cfg.RailgunShakeDuration)
         
         task.wait(1.2)
         createFinalExplosion(targetPos)
+        spawnRailgunDebris(targetPos)
         
         task.wait(6)
         setDoomsdaySky(false)
     end)
-end
-
-local function spawnRailgunDebris(hitPosition)
-    for i = 1, Cfg.RailgunDebrisCount do
-        local size = math.random(10, 30) / 10
-        local rock = Instance.new("Part")
-        rock.Shape = Enum.PartType.Block
-        rock.Material = Enum.Material.Slate
-        rock.Color = Color3.fromRGB(60, 60, 60)
-        rock.Size = Vector3.new(size, size, size)
-        rock.Anchored = false
-        rock.CanCollide = true
-        rock.CanQuery = false
-        
-        rock.Position = hitPosition + Vector3.new(
-            math.random(-5, 5),
-            math.random(5, 10),
-            math.random(-5, 5)
-        )
-        rock.CFrame = CFrame.new(rock.Position) * CFrame.Angles(
-            math.random() * math.pi * 2,
-            math.random() * math.pi * 2,
-            math.random() * math.pi * 2
-        )
-        rock.Parent = workspace
-
-        rock.AssemblyLinearVelocity = Vector3.new(
-            math.random(-60, 60),
-            math.random(50, 80),
-            math.random(-60, 60)
-        )
-        rock.AssemblyAngularVelocity = Vector3.new(
-            math.random(-30, 30), math.random(-30, 30), math.random(-30, 30)
-        )
-
-        Debris:AddItem(rock, 10)
-    end
 end
 
 local Window = WindUI:CreateWindow({
@@ -659,229 +622,68 @@ MoveSection:Slider({ Title = "飞行速度", Value = { Min = 10, Max = 500, Defa
 MoveSection:Toggle({ Title = "反挂机", Value = true, Callback = function(state) Cfg.AntiAfk = state end })
 
 local VisualSection = MainTab:Section({ Title = "场景优化", Icon = "eye" })
-VisualSection:Button({
-    Title = "灰色建筑模式",
-    Callback = function()
-        applyGrayBuildings()
-    end
-})
-VisualSection:Button({
-    Title = "隐藏宠物",
-    Callback = function()
-        hidePets()
-    end
-})
-VisualSection:Button({
-    Title = "提高帧率并降低延迟",
-    Callback = function()
-        boostPerformance()
-    end
-})
+VisualSection:Button({ Title = "灰色建筑模式", Callback = function() applyGrayBuildings() end })
+VisualSection:Button({ Title = "隐藏宠物", Callback = function() hidePets() end })
+VisualSection:Button({ Title = "提高帧率并降低延迟", Callback = function() boostPerformance() end })
 
 local FunTab = Window:Tab({ Title = "娱乐区", Icon = "sparkles" })
-
 local RailgunSection = FunTab:Section({ Title = "末日轨道炮", Icon = "zap" })
-
 local RailgunStatus = RailgunSection:Paragraph({ Title = "轨道炮状态", Desc = "请先点击「选择发射目标」选择地点" })
 
-RailgunSection:Button({
-    Title = "选择发射目标",
-    Callback = function()
-        isTargeting = true
-        RailgunStatus:SetDesc("请在游戏画面中点击地面选择目标...")
-    end
-})
-
-RailgunSection:Button({
-    Title = "立即发射",
-    Callback = function()
-        if not targetPosition then
-            RailgunStatus:SetDesc("请先点击「选择发射目标」选择地点！")
-            return
-        end
-        executeRailgunStrike(targetPosition)
-        RailgunStatus:SetDesc("末日轨道炮已发射！")
-    end
-})
-
-RailgunSection:Toggle({
-    Title = "启用 F 键发射",
-    Value = true,
-    Callback = function(state)
-        Cfg.RailgunKeyBind = state
-        RailgunStatus:SetDesc(state and "F 键发射已启用" or "F 键发射已关闭")
-    end
-})
-
-RailgunSection:Slider({
-    Title = "发射冷却 (秒)",
-    Value = { Min = 0.1, Max = 10, Default = 1.2 },
-    Step = 0.1,
-    Callback = function(value)
-        Cfg.RailgunCooldown = value
-    end
-})
-
-RailgunSection:Slider({
-    Title = "坑洞半径",
-    Value = { Min = 5, Max = 60, Default = 25 },
-    Step = 1,
-    Callback = function(value)
-        Cfg.RailgunCraterRadius = value
-    end
-})
-
-RailgunSection:Slider({
-    Title = "碎石数量",
-    Value = { Min = 0, Max = 100, Default = 25 },
-    Step = 5,
-    Callback = function(value)
-        Cfg.RailgunDebrisCount = value
-    end
-})
-
-RailgunSection:Slider({
-    Title = "屏幕震动强度",
-    Value = { Min = 0, Max = 30, Default = 5 },
-    Step = 0.5,
-    Callback = function(value)
-        Cfg.RailgunShakeIntensity = value
-    end
-})
-
-RailgunSection:Toggle({
-    Title = "启用屏幕震动",
-    Value = true,
-    Callback = function(state)
-        Cfg.RailgunShake = state
-    end
-})
-
-local FunStatus = FunTab:Section({ Title = "说明", Icon = "info" })
-FunStatus:Paragraph({ Title = "使用提示", Desc = "先点击「选择发射目标」再点击地面，然后点击「立即发射」或按 F 键，即可呼叫末日轨道炮。全特效仅本机可见。" })
+RailgunSection:Button({ Title = "选择发射目标", Callback = function() isTargeting = true RailgunStatus:SetDesc("请在游戏画面中点击地面选择目标...") end })
+RailgunSection:Button({ Title = "立即发射", Callback = function()
+    if not targetPosition then RailgunStatus:SetDesc("请先点击「选择发射目标」选择地点！") return end
+    executeRailgunStrike(targetPosition)
+    RailgunStatus:SetDesc("末日轨道炮已发射！")
+end })
+RailgunSection:Toggle({ Title = "启用 F 键发射", Value = true, Callback = function(state) Cfg.RailgunKeyBind = state RailgunStatus:SetDesc(state and "F 键发射已启用" or "F 键发射已关闭") end })
+RailgunSection:Slider({ Title = "发射冷却 (秒)", Value = { Min = 0.1, Max = 10, Default = 1.2 }, Step = 0.1, Callback = function(value) Cfg.RailgunCooldown = value end })
+RailgunSection:Slider({ Title = "坑洞半径", Value = { Min = 5, Max = 60, Default = 25 }, Step = 1, Callback = function(value) Cfg.RailgunCraterRadius = value end })
+RailgunSection:Slider({ Title = "碎石数量", Value = { Min = 0, Max = 100, Default = 25 }, Step = 5, Callback = function(value) Cfg.RailgunDebrisCount = value end })
+RailgunSection:Slider({ Title = "屏幕震动强度", Value = { Min = 0, Max = 30, Default = 5 }, Step = 0.5, Callback = function(value) Cfg.RailgunShakeIntensity = value end })
 
 local TeleportTab = Window:Tab({ Title = "传送", Icon = "send" })
-
 local TPSection = TeleportTab:Section({ Title = "传送玩家", Icon = "user" })
-
 local function GetPlayerList()
     local list = {}
     for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= player then
-            table.insert(list, p.Name)
-        end
+        if p ~= player then table.insert(list, p.Name) end
     end
     return list
 end
-
 local TPStatus = TPSection:Paragraph({ Title = "传送状态", Desc = "待机中..." })
-
-local TPDropdown = TPSection:Dropdown({
-    Title = "选择在线玩家",
-    Values = GetPlayerList(),
-    Value = "",
-    Multi = false,
-    Callback = function(selected)
-        if type(selected) == "table" then
-            selected = selected[1]
-        end
-        TP.Target = selected or ""
-        Cfg.TeleportTarget = TP.Target
+local TPDropdown = TPSection:Dropdown({ Title = "选择在线玩家", Values = GetPlayerList(), Value = "", Multi = false, Callback = function(selected)
+    if type(selected) == "table" then selected = selected[1] end
+    TP.Target = selected or ""
+    Cfg.TeleportTarget = TP.Target
+end })
+TPSection:Button({ Title = "刷新玩家列表", Callback = function() local list = GetPlayerList() pcall(function() TPDropdown:Refresh(list) end) TPStatus:SetDesc("已刷新，共 " .. #list .. " 名玩家") end })
+TPSection:Slider({ Title = "传送高度偏移 (Y)", Value = { Min = 0, Max = 20, Default = 3 }, Step = 1, Callback = function(value) Cfg.TeleportOffsetY = value TP.OffsetY = value end })
+TPSection:Button({ Title = "传送到目标玩家", Callback = function()
+    if TP.Target == "" then TPStatus:SetDesc("请先选择玩家") return end
+    local ok = TP:ToTarget()
+    if ok then TPStatus:SetDesc("已传送到 " .. TP.Target) else TPStatus:SetDesc("传送失败：找不到目标或角色") end
+end })
+TPSection:Toggle({ Title = "循环锁定传送", Value = false, Callback = function(state)
+    if state then
+        if TP.Target == "" then TPStatus:SetDesc("请先选择玩家") return end
+        TP:StartLoop()
+        TPStatus:SetDesc("循环传送中 -> " .. TP.Target)
+    else
+        TP:StopLoop()
+        TPStatus:SetDesc("已停止循环传送")
     end
-})
+end })
 
-TPSection:Button({
-    Title = "刷新玩家列表",
-    Callback = function()
-        local list = GetPlayerList()
-        pcall(function() TPDropdown:Refresh(list) end)
-        TPStatus:SetDesc("已刷新，共 " .. #list .. " 名玩家")
-    end
-})
-
-TPSection:Slider({
-    Title = "传送高度偏移 (Y)",
-    Value = { Min = 0, Max = 20, Default = 3 },
-    Step = 1,
-    Callback = function(value)
-        Cfg.TeleportOffsetY = value
-        TP.OffsetY = value
-    end
-})
-
-TPSection:Button({
-    Title = "传送到目标玩家",
-    Callback = function()
-        if TP.Target == "" then
-            TPStatus:SetDesc("请先选择玩家")
-            return
-        end
-        local ok = TP:ToTarget()
-        if ok then
-            TPStatus:SetDesc("已传送到 " .. TP.Target)
-        else
-            TPStatus:SetDesc("传送失败：找不到目标或角色")
-        end
-    end
-})
-
-TPSection:Toggle({
-    Title = "循环锁定传送",
-    Value = false,
-    Callback = function(state)
-        if state then
-            if TP.Target == "" then
-                TPStatus:SetDesc("请先选择玩家")
-                return
-            end
-            TP:StartLoop()
-            TPStatus:SetDesc("循环传送中 -> " .. TP.Target)
-        else
-            TP:StopLoop()
-            TPStatus:SetDesc("已停止循环传送")
-        end
-    end
-})
-
-Players.PlayerAdded:Connect(function()
-    task.wait(0.5)
-    pcall(function() TPDropdown:Refresh(GetPlayerList()) end)
-end)
-
-Players.PlayerRemoving:Connect(function()
-    task.wait(0.2)
-    pcall(function() TPDropdown:Refresh(GetPlayerList()) end)
-end)
+Players.PlayerAdded:Connect(function() task.wait(0.5) pcall(function() TPDropdown:Refresh(GetPlayerList()) end) end)
+Players.PlayerRemoving:Connect(function() task.wait(0.2) pcall(function() TPDropdown:Refresh(GetPlayerList()) end) end)
 
 local ProtectTab = Window:Tab({ Title = "防护", Icon = "shield" })
-
 local AntiSection = ProtectTab:Section({ Title = "反挂机 / 防踢", Icon = "shield-check" })
-AntiSection:Toggle({
-    Title = "反挂机踢出 (getconnections)",
-    Value = true,
-    Callback = function(state)
-        Cfg.AntiIdleKick = state
-        if state then applyAntiIdleKick() end
-    end
-})
-AntiSection:Toggle({
-    Title = "防客户端踢出",
-    Value = false,
-    Callback = function(state)
-        Cfg.AntiClientKick = state
-        if state then applyAntiClientKick() end
-    end
-})
-
+AntiSection:Toggle({ Title = "反挂机踢出 (getconnections)", Value = true, Callback = function(state) Cfg.AntiIdleKick = state if state then applyAntiIdleKick() end end })
+AntiSection:Toggle({ Title = "防客户端踢出", Value = false, Callback = function(state) Cfg.AntiClientKick = state if state then applyAntiClientKick() end end })
 local GroupSection = ProtectTab:Section({ Title = "群组验证", Icon = "users" })
-GroupSection:Toggle({
-    Title = "绕过群组验证",
-    Value = false,
-    Callback = function(state)
-        Cfg.BypassGroup = state
-        if state then applyBypassGroup() end
-    end
-})
+GroupSection:Toggle({ Title = "绕过群组验证", Value = false, Callback = function(state) Cfg.BypassGroup = state if state then applyBypassGroup() end end })
 
 local SG = Instance.new("ScreenGui")
 SG.Name = "PowerCrownUI"
