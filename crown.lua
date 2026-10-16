@@ -1,3 +1,5 @@
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/download/1.6.66/main.lua"))()
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
@@ -7,31 +9,6 @@ local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
-
-task.spawn(function()
-    pcall(function()
-        local CoreGui = game:GetService("CoreGui")
-        local oldUI = CoreGui:FindFirstChild("PowerCrownUI")
-        if oldUI then oldUI:Destroy() end
-    end)
-end)
-
-local WindUI
-local success, err = pcall(function()
-    WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/download/1.6.66/main.lua"))()
-end)
-
-if not success or not WindUI then
-    pcall(function()
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "UI加载失败",
-            Text = "请检查网络或执行器是否支持Http请求。错误: " .. tostring(err),
-            Duration = 10
-        })
-    end)
-    warn("WindUI加载失败: " .. tostring(err))
-    return
-end
 
 local ActionMap = {
     ["俯卧撑"] = "PushUp", ["哑铃"] = "Dumbbell", ["肩部推举1"] = "ShoulderPress_1",
