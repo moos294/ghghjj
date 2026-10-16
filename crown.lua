@@ -6,6 +6,20 @@ local RunService = game:GetService("RunService")
 local Debris = game:GetService("Debris")
 local player = Players.LocalPlayer
 
+local WindUI
+local success, err = pcall(function()
+    WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/download/1.6.66/main.lua"))()
+end)
+
+if not success or not WindUI then
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "UI加载失败",
+        Text = "请检查网络或执行器是否支持Http请求。错误: " .. tostring(err),
+        Duration = 10
+    })
+    return
+end
+
 local ActionMap = {
     ["俯卧撑"] = "PushUp", ["哑铃"] = "Dumbbell", ["肩部推举1"] = "ShoulderPress_1",
     ["肩部推举2"] = "ShoulderPress_2", ["肩部推举3"] = "ShoulderPress_3",
@@ -555,7 +569,6 @@ end
 
 _G.FireRailgun = fireRailgun
 
-local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/download/1.6.66/main.lua"))()
 local Window = WindUI:CreateWindow({
     Title = "力量之冠封存全能版", Icon = "zap", Author = "力量之冠",
     Folder = "PowerCrownSave", Theme = "Dark", Transparent = true,
