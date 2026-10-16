@@ -24,7 +24,7 @@ local Cfg = {
     EggCurrency = "Gem", EggInterval = 0.1,
     AutoTrain = false, TrainAction = "Dumbbell", TrainActionCN = "哑铃", TrainInterval = 0.2,
     FastTrain = false, FastTrainAction = "Dumbbell", FastTrainActionCN = "哑铃",
-    FastPerBeat = 20, FastInterval = 0.1, FastTotalReps = 0,
+    FastTotalReps = 0,
     AutoRebirth = false, TargetStrength = 10000, RebirthInc = 10000, TargetRebirthCount = 5,
     RebirthCheckInterval = 0.1, RebirthCooldown = 0.1,
     InfiniteRebirth = false, BaseStrength = 10000,
@@ -314,7 +314,7 @@ local TrainStatus = TrainSection:Paragraph({ Title = "锻炼状态", Desc = "待
 local FastTrainSection = MainTab:Section({ Title = "⚡ 无间隔锻炼 (全动作轮转)", Icon = "gauge" })
 FastTrainSection:Toggle({ Title = "无间隔自动锻炼", Value = false, Callback = function(state) Cfg.FastTrain = state end })
 FastTrainSection:Dropdown({ Title = "选择动作 (中文)", Values = ActionListCN, Value = "哑铃", Multi = false, Callback = function(selected) local cn = selected local en = ActionMap[cn] if en then Cfg.FastTrainAction = en Cfg.FastTrainActionCN = cn end end })
-FastTrainSection:Slider({ Title = "连发间隔 (秒)", Desc = "每组连发之间的停顿", Value = { Min = 0.01, Max = 1.0, Default = 0.1 }, Step = 0.01, Callback = function(value) Cfg.FastInterval = value end })
+FastTrainSection:Paragraph({ Title = "固定策略", Desc = "21个动作独立3秒冷却, 每0.1秒检测并触发1个冷却好的动作 (防踢防拦截)" })
 local FastTrainStatus = FastTrainSection:Paragraph({ Title = "极速锻炼状态", Desc = "待机中..." })
 
 local RebirthSection = MainTab:Section({ Title = "💀 自动重生 (限次)", Icon = "refresh-cw" })
@@ -688,7 +688,7 @@ task.spawn(function()
 
     local lastSent = {}
     for i, act in ipairs(allActions) do
-        lastSent[act] = -i * 0.1
+        lastSent[act] = -i * 0.15
     end
 
     local cooldown = 3.0
