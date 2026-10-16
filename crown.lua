@@ -337,18 +337,17 @@ local function newEffectPart(shape, material, color, transparency)
 end
 
 local function createBeam(startPos, endPos, width, color, transparency)
-    local distance = (endPos - startPos).Magnitude
     local holder = newEffectPart(Enum.PartType.Block, Enum.Material.SmoothPlastic, color, 1)
     holder.Size = Vector3.new(0.1, 0.1, 0.1)
-    holder.CFrame = CFrame.lookAt(startPos, endPos)
+    holder.CFrame = CFrame.new(startPos)
     holder.Parent = workspace
 
     local att0 = Instance.new("Attachment")
-    att0.Position = Vector3.new(0, 0, 0)
+    att0.WorldPosition = startPos
     att0.Parent = holder
 
     local att1 = Instance.new("Attachment")
-    att1.Position = Vector3.new(0, 0, -distance)
+    att1.WorldPosition = endPos
     att1.Parent = holder
 
     local beam = Instance.new("Beam")
@@ -361,7 +360,7 @@ local function createBeam(startPos, endPos, width, color, transparency)
     beam.LightEmission = 1
     beam.LightInfluence = 0
     beam.Transparency = NumberSequence.new(transparency)
-    beam.Segments = 1
+    beam.Segments = 10
     beam.Parent = holder
 
     return holder, beam
@@ -424,14 +423,86 @@ local function createShockwave(position, delay, maxScale, color)
 end
 
 local function createCrater(hitPosition)
+    if not Cfg.RailgunCraterEnabled then return end
+    
     local terrain = workspace.Terrain
-    terrain:FillBall(hitPosition, Cfg.RailgunCraterRadius, Enum.Material.Air)
-    terrain:FillBall(hitPosition - Vector3.new(0, Cfg.RailgunCraterDepth * 0.45, 0), Cfg.RailgunCraterRadius * 0.7, Enum.Material.Air)
-    terrain:FillBall(hitPosition - Vector3.new(0, Cfg.RailgunCraterDepth * 0.85, 0), Cfg.RailgunCraterRadius * 0.45, Enum.Material.Air)
-    terrain:FillBall(hitPosition - Vector3.new(0, Cfg.RailgunCraterDepth * 0.9, 0), Cfg.RailgunCraterRadius * 0.42, Enum.Material.Basalt)
+    local radius = Cfg.RailgunCraterRadius
+    local depth = Cfg.RailgunCraterDepth
+    
+    terrain:FillBall(hitPosition, radius, Enum.Material.Air)
+    terrain:FillBall(hitPosition - Vector3.new(0, depth * 0.4, 0), radius * 0.8, Enum.Material.Air)
+    terrain:FillBall(hitPosition - Vector3.new(0, depth * 0.8, 0), radius * 0.5, Enum.Material.Air)
+    
+    terrain:FillBall(hitPosition - Vector3.new(0, depth * 0.9, 0), radius * 0.55, Enum.Material.Basalt)
+    for i = 1, 8 do
+        local angle = math.random() * math.pi * 2
+        local dist = radius * (0.7 + math.random() * 0.5)
+        local offset = Vector3.new(math.cos(angle) * dist, math.random(-2, 1), math.sin(angle) * dist)
+        terrain:FillBall(hitPosition + offset, math.random(2, 4), Enum.Material.Basalt)
+    end
+
+    local lava = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(255, 70, 0), 0.3)
+    lava.Size = Vector3.new(0.5, radius * 0.5, radius * 0.5)
+    lava.CFrame = CFrame.new(hitPosition - Vector3.new(0, depth * 0.85, 0)) * CFrame.Angles(0, 0, math.rad(90))
+    lava.Parent = workspace
+    
+    TweenService:Create(lava, TweenInfo.new(4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = Vector3.new(0.5, radius * 0.7, radius * 0.7),
+        Transparency = 1,
+        Color = Color3.fromRGB(100, 20, 0)
+    }):Play()
+    Debris:AddItem(lava, 4.5)
+
+    for i = 1, 6 do
+        local crack = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(255, 120, 0), 0.2)
+        local crackLen = math.random(radius * 1.2, radius * 2.5)
+        crack.Size = Vector3.new(0.3, 0.3, crackLen)
+        local angle = math.random() * math.pi * 2
+        crack.CFrame = CFrame.new(hitPosition) * CFrame.Angles(0, angle, 0) * CFrame.new(0, 0.2, -crackLen / 2)
+        crack.Parent = workspace
+        
+        TweenService:Create(crack, TweenInfo.new(2.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Transparency = 1
+        }):Play()
+        Debris:AddItem(crack, 3)
+    end
+
+    local particleHolder = newEffectPart(Enum.PartType.Ball, Enum.Material.SmoothPlastic, Color3.new(1, 1, 1), 1)
+    particleHolder.Size = Vector3.new(1, 1, 1)
+    particleHolder.Position = hitPosition - Vector3.new(0, depth * 0.4, 0)
+    particleHolder.Parent = workspace
+
+    local smoke = Instance.new("ParticleEmitter")
+    smoke.Texture = "rbxassetid://243660364"
+    smoke.Color = ColorSequence.new(Color3.fromRGB(40, 40, 40), Color3.fromRGB(120, 120, 120))
+    smoke.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 2), NumberSequenceKeypoint.new(1, 12)})
+    smoke.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.4), NumberSequenceKeypoint.new(1, 1)})
+    smoke.Lifetime = NumberRange.new(1.5, 4)
+    smoke.Rate = 40
+    smoke.Speed = NumberRange.new(5, 15)
+    smoke.SpreadAngle = Vector2.new(30, 30)
+    smoke.Parent = particleHolder
+
+    local embers = Instance.new("ParticleEmitter")
+    embers.Texture = "rbxassetid://243660364"
+    embers.Color = ColorSequence.new(Color3.fromRGB(255, 180, 0), Color3.fromRGB(255, 40, 0))
+    embers.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 1.5), NumberSequenceKeypoint.new(1, 0)})
+    embers.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.5, 0.5), NumberSequenceKeypoint.new(1, 1)})
+    embers.Lifetime = NumberRange.new(1, 2.5)
+    embers.Rate = 80
+    embers.Speed = NumberRange.new(15, 40)
+    embers.SpreadAngle = Vector2.new(180, 180)
+    embers.Parent = particleHolder
+
+    task.delay(2.5, function()
+        smoke.Enabled = false
+        embers.Enabled = false
+    end)
+    Debris:AddItem(particleHolder, 6)
 end
 
 local function spawnRailgunDebris(hitPosition)
+    if not Cfg.RailgunDebrisEnabled then return end
     for i = 1, Cfg.RailgunDebrisCount do
         local size = math.random(10, 35) / 10
         local rock = Instance.new("Part")
@@ -473,6 +544,7 @@ local function spawnRailgunDebris(hitPosition)
 end
 
 local function screenShake(intensity, duration)
+    if not Cfg.RailgunShake then return end
     local startTime = tick()
     local conn
     conn = RunService.RenderStepped:Connect(function()
@@ -530,16 +602,9 @@ local function fireRailgun()
     createShockwave(hitPos, 0, Cfg.RailgunCraterRadius * 2.4, Color3.fromRGB(255, 180, 80))
     createShockwave(hitPos, 0.1, Cfg.RailgunCraterRadius * 3.2, Color3.fromRGB(255, 80, 40))
 
-    if Cfg.RailgunCraterEnabled then
-        createCrater(hitPos)
-    end
-    if Cfg.RailgunDebrisEnabled then
-        spawnRailgunDebris(hitPos)
-    end
-
-    if Cfg.RailgunShake then
-        screenShake(Cfg.RailgunShakeIntensity, Cfg.RailgunShakeDuration)
-    end
+    createCrater(hitPos)
+    spawnRailgunDebris(hitPos)
+    screenShake(Cfg.RailgunShakeIntensity, Cfg.RailgunShakeDuration)
 
     task.delay(0.45, function()
         for _, part in ipairs(beams) do
