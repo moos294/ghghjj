@@ -4,7 +4,9 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local Debris = game:GetService("Debris")
+local Lighting = game:GetService("Lighting")
 local player = Players.LocalPlayer
+local mouse = player:GetMouse()
 
 local WindUI
 local success, err = pcall(function()
@@ -239,7 +241,6 @@ local function hidePets()
 end
 
 local function boostPerformance()
-    local Lighting = game:GetService("Lighting")
     pcall(function()
         Lighting.GlobalShadows = false
         Lighting.FogEnd = 100000
@@ -342,125 +343,228 @@ local function newEffectPart(shape, material, color, transparency)
     return p
 end
 
-local function createLaserOrbs(startPos, endPos, width, color, transparency)
-    local distance = (endPos - startPos).Magnitude
-    local dir = (endPos - startPos).Unit
-    local spacing = width * 0.6
+local targetPosition = nil
+local isTargeting = false
+local chargePart = nil
+local originalLighting = {
+    Ambient = Lighting.Ambient,
+    OutdoorAmbient = Lighting.OutdoorAmbient,
+    Brightness = Lighting.Brightness,
+    ClockTime = Lighting.ClockTime,
+    FogColor = Lighting.FogColor,
+    FogEnd = Lighting.FogEnd
+}
+
+local function setDoomsdaySky(active)
+    if active then
+        local cc = Lighting:FindFirstChild("DoomsdayCC") or Instance.new("ColorCorrectionEffect")
+        cc.Name = "DoomsdayCC"
+        cc.TintColor = Color3.fromRGB(255, 100, 100)
+        cc.Contrast = 0.3
+        cc.Saturation = -0.2
+        cc.Parent = Lighting
+        
+        local atm = Lighting:FindFirstChild("DoomsdayAtm") or Instance.new("Atmosphere")
+        atm.Name = "DoomsdayAtm"
+        atm.Density = 0.6
+        atm.Color = Color3.fromRGB(150, 0, 0)
+        atm.Decay = Color3.fromRGB(100, 0, 0)
+        atm.Glare = 0
+        atm.Haze = 2
+        atm.Parent = Lighting
+        
+        TweenService:Create(Lighting, TweenInfo.new(2), {
+            Ambient = Color3.fromRGB(80, 0, 0),
+            OutdoorAmbient = Color3.fromRGB(100, 0, 0),
+            Brightness = 0.5,
+            ClockTime = 0,
+            FogColor = Color3.fromRGB(100, 0, 0),
+            FogEnd = 400
+        }):Play()
+    else
+        local cc = Lighting:FindFirstChild("DoomsdayCC")
+        if cc then cc:Destroy() end
+        local atm = Lighting:FindFirstChild("DoomsdayAtm")
+        if atm then atm:Destroy() end
+        
+        TweenService:Create(Lighting, TweenInfo.new(2), {
+            Ambient = originalLighting.Ambient,
+            OutdoorAmbient = originalLighting.OutdoorAmbient,
+            Brightness = originalLighting.Brightness,
+            ClockTime = originalLighting.ClockTime,
+            FogColor = originalLighting.FogColor,
+            FogEnd = originalLighting.FogEnd
+        }):Play()
+    end
+end
+
+local function createChargingOrb(position)
+    local orb = newEffectPart(Enum.PartType.Ball, Enum.Material.Glass, Color3.fromRGB(0, 0, 0), 0.2)
+    orb.Size = Vector3.new(1, 0.5, 1)
+    orb.Position = position + Vector3.new(0, 0.5, 0)
+    orb.Reflectance = 0.8
+    orb.Parent = workspace
+    
+    TweenService:Create(orb, TweenInfo.new(3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = Vector3.new(30, 15, 30),
+        Transparency = 0.05,
+        Color = Color3.fromRGB(40, 0, 0)
+    }):Play()
+    
+    return orb
+end
+
+local function createLaserFromSky(targetPos)
+    local skyPos = targetPos + Vector3.new(0, 400, 0)
+    local distance = 400
+    local dir = (targetPos - skyPos).Unit
+    local spacing = 4
     local count = math.floor(distance / spacing)
-    if count < 1 then count = 1 end
     
     for i = 0, count do
-        local pos = startPos + dir * (i * spacing)
-        local orb = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, color, transparency)
-        orb.Size = Vector3.new(width, width, width)
-        orb.Position = pos
-        orb.Parent = workspace
-        
         task.spawn(function()
-            task.wait(0.15)
-            TweenService:Create(orb, TweenInfo.new(0.4), {Transparency = 1}):Play()
-            Debris:AddItem(orb, 0.6)
+            task.wait(i * 0.005)
+            local pos = skyPos + dir * (i * spacing)
+            local orb = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(255, 255, 255), 0.1)
+            orb.Size = Vector3.new(2, 2, 2)
+            orb.Position = pos
+            orb.Parent = workspace
+            
+            TweenService:Create(orb, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                Size = Vector3.new(8, 8, 8),
+                Transparency = 1,
+                Color = Color3.fromRGB(255, 40, 0)
+            }):Play()
+            Debris:AddItem(orb, 1)
         end)
     end
 end
 
-local function createMuzzleFlash(position)
-    local flash = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(255, 220, 180), 0.2)
-    flash.Size = Vector3.new(6, 6, 6)
-    flash.Position = position
-    flash.Parent = workspace
-
-    local light = Instance.new("PointLight")
-    light.Color = Color3.fromRGB(255, 180, 80)
-    light.Range = 30
-    light.Brightness = 10
-    light.Parent = flash
-
-    TweenService:Create(flash, TweenInfo.new(0.3), {
-        Size = Vector3.new(10, 10, 10),
-        Transparency = 1
-    }):Play()
-
-    Debris:AddItem(flash, 0.5)
-end
-
-local function createImpactFlash(position)
-    local flash = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(255, 255, 220), 0)
-    flash.Size = Vector3.new(4, 4, 4)
-    flash.Position = position
-    flash.Parent = workspace
-
-    local light = Instance.new("PointLight")
-    light.Color = Color3.fromRGB(255, 200, 100)
-    light.Range = 50
-    light.Brightness = 25
-    light.Parent = flash
-
-    TweenService:Create(flash, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Size = Vector3.new(50, 50, 50),
-        Transparency = 1
-    }):Play()
-
-    Debris:AddItem(flash, 1)
-end
-
-local function createShockwave(position, delay, maxScale, color)
-    task.delay(delay, function()
-        local ring = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, color, 0.1)
-        ring.Size = Vector3.new(0.5, 4, 4)
-        ring.CFrame = CFrame.new(position) * CFrame.Angles(0, 0, math.rad(90))
-        ring.Parent = workspace
-
-        TweenService:Create(ring, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Size = Vector3.new(0.5, maxScale, maxScale),
-            Transparency = 1
-        }):Play()
-
-        Debris:AddItem(ring, 1.2)
-    end)
-end
-
-local function createFakeCrater(hitPosition)
-    if not Cfg.RailgunCraterEnabled then return end
-    
+local function createFinalExplosion(hitPosition)
     local craterRadius = Cfg.RailgunCraterRadius
     
     local scorchedEarth = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Slate, Color3.fromRGB(15, 15, 15), 0.05)
-    scorchedEarth.Size = Vector3.new(1.5, craterRadius * 2, craterRadius * 2)
+    scorchedEarth.Size = Vector3.new(1.5, 2, 2)
     scorchedEarth.CFrame = CFrame.new(hitPosition - Vector3.new(0, 0.8, 0)) * CFrame.Angles(0, 0, math.rad(90))
     scorchedEarth.Parent = workspace
     
-    local lava = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(255, 70, 0), 0.2)
-    lava.Size = Vector3.new(1, craterRadius * 1.2, craterRadius * 1.2)
+    local lava = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(255, 70, 0), 0.1)
+    lava.Size = Vector3.new(1, 2, 2)
     lava.CFrame = CFrame.new(hitPosition - Vector3.new(0, 1, 0)) * CFrame.Angles(0, 0, math.rad(90))
     lava.Parent = workspace
     
-    TweenService:Create(lava, TweenInfo.new(3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Size = Vector3.new(1, craterRadius * 1.5, craterRadius * 1.5),
-        Transparency = 1,
+    TweenService:Create(scorchedEarth, TweenInfo.new(2.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = Vector3.new(1.5, craterRadius * 2, craterRadius * 2)
+    }):Play()
+    
+    TweenService:Create(lava, TweenInfo.new(2.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = Vector3.new(1, craterRadius * 1.6, craterRadius * 1.6),
+        Transparency = 0.2,
         Color = Color3.fromRGB(100, 20, 0)
     }):Play()
-    Debris:AddItem(lava, 4)
-    Debris:AddItem(scorchedEarth, 10)
+    
+    Debris:AddItem(lava, 30)
+    Debris:AddItem(scorchedEarth, 30)
 
-    for i = 1, 10 do
-        local smokePart = newEffectPart(Enum.PartType.Ball, Enum.Material.SmoothPlastic, Color3.fromRGB(35, 35, 35), 0.4)
-        local smokeSize = math.random(8, 16)
-        smokePart.Size = Vector3.new(smokeSize, smokeSize, smokeSize)
-        smokePart.Position = hitPosition + Vector3.new(math.random(-craterRadius, craterRadius), 3, math.random(-craterRadius, craterRadius))
-        smokePart.Parent = workspace
-        
-        local riseY = math.random(20, 35)
-        local expandSize = smokePart.Size * 2.5
-        
-        TweenService:Create(smokePart, TweenInfo.new(2.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Position = smokePart.Position + Vector3.new(0, riseY, 0),
-            Size = expandSize,
-            Transparency = 1
-        }):Play()
-        Debris:AddItem(smokePart, 3)
+    for i = 1, 12 do
+        task.spawn(function()
+            task.wait(math.random(0, 10) / 10)
+            local pillarAngle = (i / 12) * math.pi * 2 + math.random(-0.2, 0.2)
+            local dist = craterRadius + math.random(2, 8)
+            local x = math.cos(pillarAngle) * dist
+            local z = math.sin(pillarAngle) * dist
+            local height = math.random(8, 20)
+            
+            local pillar = newEffectPart(Enum.PartType.Block, Enum.Material.Slate, Color3.fromRGB(50, 50, 50), 0)
+            pillar.Size = Vector3.new(math.random(2, 5), height, math.random(2, 5))
+            pillar.CFrame = CFrame.new(hitPosition + Vector3.new(x, -height, z)) * CFrame.Angles(math.random(-0.2, 0.2), math.random(-0.2, 0.2), math.random(-0.2, 0.2))
+            pillar.Parent = workspace
+            
+            local targetCFrame = CFrame.new(hitPosition + Vector3.new(x, height/2 - 2, z)) * CFrame.Angles(math.random(-0.3, 0.3), math.random(-0.3, 0.3), math.random(-0.3, 0.3))
+            
+            TweenService:Create(pillar, TweenInfo.new(1.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                CFrame = targetCFrame
+            }):Play()
+            
+            Debris:AddItem(pillar, 30)
+        end)
+    end
+
+    for i = 1, 20 do
+        task.spawn(function()
+            task.wait(math.random(0, 5) / 10)
+            local smokePart = newEffectPart(Enum.PartType.Ball, Enum.Material.SmoothPlastic, Color3.fromRGB(30, 30, 30), 0.3)
+            local smokeSize = math.random(10, 20)
+            smokePart.Size = Vector3.new(smokeSize, smokeSize, smokeSize)
+            smokePart.Position = hitPosition + Vector3.new(math.random(-craterRadius, craterRadius), 4, math.random(-craterRadius, craterRadius))
+            smokePart.Parent = workspace
+            
+            local riseY = math.random(40, 70)
+            local expandSize = smokePart.Size * 3
+            
+            TweenService:Create(smokePart, TweenInfo.new(8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                Position = smokePart.Position + Vector3.new(math.random(-10, 10), riseY, math.random(-10, 10)),
+                Size = expandSize,
+                Transparency = 1
+            }):Play()
+            Debris:AddItem(smokePart, 9)
+        end)
     end
 end
+
+local function screenShake(intensity, duration)
+    if not Cfg.RailgunShake then return end
+    local char = player.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hum then return end
+    
+    task.spawn(function()
+        local startTime = tick()
+        while tick() - startTime < duration do
+            local elapsed = tick() - startTime
+            local fade = 1 - (elapsed / duration)
+            local sx = (math.random() - 0.5) * intensity * fade
+            local sy = (math.random() - 0.5) * intensity * fade
+            hum.CameraOffset = Vector3.new(sx, sy, 0)
+            RunService.Heartbeat:Wait()
+        end
+        hum.CameraOffset = Vector3.zero
+    end)
+end
+
+local lastRailgunFire = 0
+
+local function executeRailgunStrike(targetPos)
+    local now = tick()
+    if now - lastRailgunFire < Cfg.RailgunCooldown then return end
+    lastRailgunFire = now
+    
+    spawnRailgunDebris(targetPos)
+    
+    setDoomsdaySky(true)
+    
+    local chargeOrb = createChargingOrb(targetPos)
+    
+    task.spawn(function()
+        task.wait(3)
+        
+        if chargeOrb and chargeOrb.Parent then
+            chargeOrb:Destroy()
+        end
+        
+        createLaserFromSky(targetPos)
+        screenShake(12, 1.2)
+        
+        task.wait(0.5)
+        createFinalExplosion(targetPos)
+        
+        task.wait(5)
+        setDoomsdaySky(false)
+    end)
+end
+
+_G.FireRailgunAt = executeRailgunStrike
 
 local function spawnRailgunDebris(hitPosition)
     if not Cfg.RailgunDebrisEnabled then return end
@@ -499,75 +603,6 @@ local function spawnRailgunDebris(hitPosition)
         Debris:AddItem(rock, 3.5)
     end
 end
-
-local function screenShake(intensity, duration)
-    if not Cfg.RailgunShake then return end
-    local char = player.Character
-    if not char then return end
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if not hum then return end
-    
-    task.spawn(function()
-        local startTime = tick()
-        while tick() - startTime < duration do
-            local elapsed = tick() - startTime
-            local fade = 1 - (elapsed / duration)
-            local sx = (math.random() - 0.5) * intensity * fade
-            local sy = (math.random() - 0.5) * intensity * fade
-            hum.CameraOffset = Vector3.new(sx, sy, 0)
-            RunService.Heartbeat:Wait()
-        end
-        hum.CameraOffset = Vector3.zero
-    end)
-end
-
-local function raycastGround()
-    local character = player.Character
-    if not character then return nil end
-    local rootPart = character:FindFirstChild("HumanoidRootPart")
-    if not rootPart then return nil end
-
-    local origin = (rootPart.CFrame * CFrame.new(0, 5, -3)).Position
-    local direction = Vector3.new(0, -300, 0)
-
-    local params = RaycastParams.new()
-    params.FilterDescendantsInstances = {character}
-    params.FilterType = Enum.RaycastFilterType.Exclude
-    params.IgnoreWater = false
-
-    local result = workspace:Raycast(origin, direction, params)
-    if result then
-        return origin, result.Position
-    end
-    return nil
-end
-
-local lastRailgunFire = 0
-
-local function fireRailgun()
-    local now = tick()
-    if now - lastRailgunFire < Cfg.RailgunCooldown then return end
-    lastRailgunFire = now
-
-    local origin, hitPos = raycastGround()
-    if not hitPos then return end
-
-    createMuzzleFlash(origin)
-
-    createLaserOrbs(origin, hitPos, Cfg.RailgunWidthOuter, Cfg.RailgunColorOuter, 0.3)
-    createLaserOrbs(origin, hitPos, Cfg.RailgunWidthMid, Cfg.RailgunColorMid, 0.1)
-    createLaserOrbs(origin, hitPos, Cfg.RailgunWidthCore, Cfg.RailgunColorCore, 0)
-
-    createImpactFlash(hitPos)
-    createShockwave(hitPos, 0, Cfg.RailgunCraterRadius * 2.5, Color3.fromRGB(255, 180, 80))
-    createShockwave(hitPos, 0.1, Cfg.RailgunCraterRadius * 3.5, Color3.fromRGB(255, 80, 40))
-
-    createFakeCrater(hitPos)
-    spawnRailgunDebris(hitPos)
-    screenShake(Cfg.RailgunShakeIntensity, Cfg.RailgunShakeDuration)
-end
-
-_G.FireRailgun = fireRailgun
 
 local Window = WindUI:CreateWindow({
     Title = "力量之冠封存全能版", Icon = "zap", Author = "力量之冠",
@@ -648,13 +683,25 @@ local FunTab = Window:Tab({ Title = "娱乐区", Icon = "sparkles" })
 
 local RailgunSection = FunTab:Section({ Title = "轨道炮激光", Icon = "zap" })
 
-local RailgunStatus = RailgunSection:Paragraph({ Title = "轨道炮状态", Desc = "按 F 或点击下方按钮发射" })
+local RailgunStatus = RailgunSection:Paragraph({ Title = "轨道炮状态", Desc = "请先选择目标地点，然后点击发射" })
+
+RailgunSection:Button({
+    Title = "选择发射目标",
+    Callback = function()
+        isTargeting = true
+        RailgunStatus:SetDesc("请点击地面选择目标...")
+    end
+})
 
 RailgunSection:Button({
     Title = "立即发射",
     Callback = function()
-        fireRailgun()
-        RailgunStatus:SetDesc("已发射轨道炮")
+        if not targetPosition then
+            RailgunStatus:SetDesc("请先选择发射目标！")
+            return
+        end
+        executeRailgunStrike(targetPosition)
+        RailgunStatus:SetDesc("已发射轨道炮！")
     end
 })
 
@@ -677,47 +724,11 @@ RailgunSection:Slider({
 })
 
 RailgunSection:Slider({
-    Title = "外层激光宽度",
-    Value = { Min = 1, Max = 15, Default = 4 },
-    Step = 0.5,
-    Callback = function(value)
-        Cfg.RailgunWidthOuter = value
-    end
-})
-
-RailgunSection:Slider({
-    Title = "中层激光宽度",
-    Value = { Min = 0.5, Max = 10, Default = 2.4 },
-    Step = 0.2,
-    Callback = function(value)
-        Cfg.RailgunWidthMid = value
-    end
-})
-
-RailgunSection:Slider({
-    Title = "内核激光宽度",
-    Value = { Min = 0.2, Max = 5, Default = 1 },
-    Step = 0.1,
-    Callback = function(value)
-        Cfg.RailgunWidthCore = value
-    end
-})
-
-RailgunSection:Slider({
     Title = "坑洞半径",
-    Value = { Min = 0, Max = 40, Default = 14 },
+    Value = { Min = 5, Max = 50, Default = 14 },
     Step = 1,
     Callback = function(value)
         Cfg.RailgunCraterRadius = value
-    end
-})
-
-RailgunSection:Slider({
-    Title = "坑洞深度",
-    Value = { Min = 0, Max = 30, Default = 12 },
-    Step = 1,
-    Callback = function(value)
-        Cfg.RailgunCraterDepth = value
     end
 })
 
@@ -748,14 +759,6 @@ RailgunSection:Toggle({
 })
 
 RailgunSection:Toggle({
-    Title = "启用挖坑",
-    Value = true,
-    Callback = function(state)
-        Cfg.RailgunCraterEnabled = state
-    end
-})
-
-RailgunSection:Toggle({
     Title = "启用碎石飞溅",
     Value = true,
     Callback = function(state)
@@ -764,7 +767,7 @@ RailgunSection:Toggle({
 })
 
 local FunStatus = FunTab:Section({ Title = "说明", Icon = "info" })
-FunStatus:Paragraph({ Title = "使用提示", Desc = "轨道炮特效仅本机可见。按 F 键或点击「立即发射」即可引爆。所有效果（坑洞、碎石、激光）不会影响其他玩家。" })
+FunStatus:Paragraph({ Title = "使用提示", Desc = "先点击「选择发射目标」再点击地面，然后点击「立即发射」或按 F 键，即可呼叫末日轨道炮。" })
 
 local TeleportTab = Window:Tab({ Title = "传送", Icon = "send" })
 
@@ -1104,8 +1107,28 @@ end)
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
+    
+    if isTargeting then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            local ray = mouse.UnitRay
+            local raycastParams = RaycastParams.new()
+            raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+            raycastParams.FilterDescendantsInstances = {player.Character}
+            
+            local result = workspace:Raycast(ray.Origin, ray.Direction * 1000, raycastParams)
+            if result then
+                targetPosition = result.Position
+                RailgunStatus:SetDesc("目标已选定: " .. tostring(targetPosition))
+                isTargeting = false
+            end
+        end
+        return
+    end
+    
     if input.KeyCode == Enum.KeyCode.F and Cfg.RailgunKeyBind then
-        fireRailgun()
+        if targetPosition then
+            executeRailgunStrike(targetPosition)
+        end
     end
 end)
 
@@ -1289,4 +1312,4 @@ end)
 applyWalkSpeed()
 if Cfg.AntiIdleKick then applyAntiIdleKick() end
 
-print("[力量之冠封存全能版 · 娱乐区已集成]")
+print("[力量之冠封存全能版 · 末日轨道炮已就绪]")
