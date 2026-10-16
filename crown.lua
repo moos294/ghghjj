@@ -122,10 +122,7 @@ local function getCurrentRebirths()
 end
 
 local function applyAntiIdleKick()
-    if not getconnections then
-        warn("[反挂机-kick] 当前执行器不支持 getconnections")
-        return
-    end
+    if not getconnections then return end
     pcall(function()
         for _, conn in next, getconnections(player.Idled) do
             pcall(function() conn:Disable() end)
@@ -135,10 +132,7 @@ local function applyAntiIdleKick()
 end
 
 local function applyAntiClientKick()
-    if not getgc then
-        warn("[防踢] 当前执行器不支持 getgc")
-        return
-    end
+    if not getgc then return end
     pcall(function()
         for _, Value in next, getgc(true) do
             if typeof(Value) == "table" then
@@ -151,10 +145,7 @@ local function applyAntiClientKick()
 end
 
 local function applyBypassGroup()
-    if not hookmetamethod or not hookfunction then
-        warn("[绕过群组] 当前执行器不支持 hookmetamethod / hookfunction")
-        return
-    end
+    if not hookmetamethod or not hookfunction then return end
     pcall(function()
         local clonerefFunc = cloneref or function(o) return o end
         local getnamecallmethod = getnamecallmethod
@@ -337,24 +328,25 @@ local function newEffectPart(shape, material, color, transparency)
     return p
 end
 
-local function createLaserParticles(startPos, endPos, color, size)
+local function createLaserOrbs(startPos, endPos, width, color, transparency)
     local distance = (endPos - startPos).Magnitude
     local dir = (endPos - startPos).Unit
-    local steps = math.floor(distance / 1.5)
-    if steps < 1 then steps = 1 end
+    local spacing = width * 0.6
+    local count = math.floor(distance / spacing)
+    if count < 1 then count = 1 end
     
-    for i = 0, steps do
-        local pos = startPos + dir * (i * (distance / steps))
-        local orb = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, color, 0)
-        orb.Size = Vector3.new(size, size, size)
+    for i = 0, count do
+        local pos = startPos + dir * (i * spacing)
+        local orb = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, color, transparency)
+        orb.Size = Vector3.new(width, width, width)
         orb.Position = pos
         orb.Parent = workspace
         
-        TweenService:Create(orb, TweenInfo.new(0.5, Enum.EasingStyle.Linear), {
-            Transparency = 1,
-            Size = Vector3.new(size * 0.1, size * 0.1, size * 0.1)
-        }):Play()
-        Debris:AddItem(orb, 0.6)
+        task.spawn(function()
+            task.wait(0.15)
+            TweenService:Create(orb, TweenInfo.new(0.4), {Transparency = 1}):Play()
+            Debris:AddItem(orb, 0.6)
+        end)
     end
 end
 
@@ -414,36 +406,37 @@ local function createShockwave(position, delay, maxScale, color)
     end)
 end
 
-local function createCrater(hitPosition)
+local function createFakeCrater(hitPosition)
     if not Cfg.RailgunCraterEnabled then return end
     
     local craterRadius = Cfg.RailgunCraterRadius
     
-    local scorchedEarth = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Slate, Color3.fromRGB(20, 20, 20), 0.1)
-    scorchedEarth.Size = Vector3.new(2, craterRadius * 2, craterRadius * 2)
-    scorchedEarth.CFrame = CFrame.new(hitPosition - Vector3.new(0, 1, 0)) * CFrame.Angles(0, 0, math.rad(90))
+    local scorchedEarth = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Slate, Color3.fromRGB(15, 15, 15), 0.05)
+    scorchedEarth.Size = Vector3.new(1.5, craterRadius * 2, craterRadius * 2)
+    scorchedEarth.CFrame = CFrame.new(hitPosition - Vector3.new(0, 0.8, 0)) * CFrame.Angles(0, 0, math.rad(90))
     scorchedEarth.Parent = workspace
     
-    local lava = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(255, 70, 0), 0.3)
-    lava.Size = Vector3.new(0.5, craterRadius * 0.6, craterRadius * 0.6)
-    lava.CFrame = CFrame.new(hitPosition - Vector3.new(0, 1.5, 0)) * CFrame.Angles(0, 0, math.rad(90))
+    local lava = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(255, 70, 0), 0.2)
+    lava.Size = Vector3.new(1, craterRadius * 1.2, craterRadius * 1.2)
+    lava.CFrame = CFrame.new(hitPosition - Vector3.new(0, 1, 0)) * CFrame.Angles(0, 0, math.rad(90))
     lava.Parent = workspace
     
     TweenService:Create(lava, TweenInfo.new(3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Size = Vector3.new(0.5, craterRadius * 0.8, craterRadius * 0.8),
+        Size = Vector3.new(1, craterRadius * 1.5, craterRadius * 1.5),
         Transparency = 1,
         Color = Color3.fromRGB(100, 20, 0)
     }):Play()
     Debris:AddItem(lava, 4)
-    Debris:AddItem(scorchedEarth, 8)
+    Debris:AddItem(scorchedEarth, 10)
 
-    for i = 1, 8 do
-        local smokePart = newEffectPart(Enum.PartType.Ball, Enum.Material.SmoothPlastic, Color3.fromRGB(40, 40, 40), 0.4)
-        smokePart.Size = Vector3.new(math.random(6, 12), math.random(6, 12), math.random(6, 12))
-        smokePart.Position = hitPosition + Vector3.new(math.random(-craterRadius, craterRadius), 2, math.random(-craterRadius, craterRadius))
+    for i = 1, 10 do
+        local smokePart = newEffectPart(Enum.PartType.Ball, Enum.Material.SmoothPlastic, Color3.fromRGB(35, 35, 35), 0.4)
+        local smokeSize = math.random(8, 16)
+        smokePart.Size = Vector3.new(smokeSize, smokeSize, smokeSize)
+        smokePart.Position = hitPosition + Vector3.new(math.random(-craterRadius, craterRadius), 3, math.random(-craterRadius, craterRadius))
         smokePart.Parent = workspace
         
-        local riseY = math.random(15, 25)
+        local riseY = math.random(20, 35)
         local expandSize = smokePart.Size * 2.5
         
         TweenService:Create(smokePart, TweenInfo.new(2.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
@@ -465,16 +458,13 @@ local function spawnRailgunDebris(hitPosition)
         rock.Color = Color3.fromRGB(60, 60, 60)
         rock.Size = Vector3.new(size, size, size)
         rock.Anchored = false
-        rock.CanCollide = false
+        rock.CanCollide = true
         rock.CanQuery = false
-        rock.CanTouch = false
-
-        local angle = math.random() * math.pi * 2
-        local radius = math.random() * 2
+        
         rock.Position = hitPosition + Vector3.new(
-            math.cos(angle) * radius,
-            math.random() * 2,
-            math.sin(angle) * radius
+            math.random(-4, 4),
+            math.random(3, 8),
+            math.random(-4, 4)
         )
         rock.CFrame = CFrame.new(rock.Position) * CFrame.Angles(
             math.random() * math.pi * 2,
@@ -483,13 +473,16 @@ local function spawnRailgunDebris(hitPosition)
         )
         rock.Parent = workspace
 
-        local dir = Vector3.new(math.cos(angle), 1, math.sin(angle)).Unit
-        rock.AssemblyLinearVelocity = dir * 60 * (0.5 + math.random()) + Vector3.new(0, math.random(20, 50), 0)
+        rock.AssemblyLinearVelocity = Vector3.new(
+            math.random(-50, 50),
+            math.random(40, 70),
+            math.random(-50, 50)
+        )
         rock.AssemblyAngularVelocity = Vector3.new(
-            math.random(-20, 20), math.random(-20, 20), math.random(-20, 20)
+            math.random(-30, 30), math.random(-30, 30), math.random(-30, 30)
         )
 
-        Debris:AddItem(rock, 3)
+        Debris:AddItem(rock, 3.5)
     end
 end
 
@@ -547,15 +540,15 @@ local function fireRailgun()
 
     createMuzzleFlash(origin)
 
-    createLaserParticles(origin, hitPos, Cfg.RailgunColorOuter, Cfg.RailgunWidthOuter)
-    createLaserParticles(origin, hitPos, Cfg.RailgunColorMid, Cfg.RailgunWidthMid)
-    createLaserParticles(origin, hitPos, Cfg.RailgunColorCore, Cfg.RailgunWidthCore)
+    createLaserOrbs(origin, hitPos, Cfg.RailgunWidthOuter, Cfg.RailgunColorOuter, 0.3)
+    createLaserOrbs(origin, hitPos, Cfg.RailgunWidthMid, Cfg.RailgunColorMid, 0.1)
+    createLaserOrbs(origin, hitPos, Cfg.RailgunWidthCore, Cfg.RailgunColorCore, 0)
 
     createImpactFlash(hitPos)
     createShockwave(hitPos, 0, Cfg.RailgunCraterRadius * 2.5, Color3.fromRGB(255, 180, 80))
     createShockwave(hitPos, 0.1, Cfg.RailgunCraterRadius * 3.5, Color3.fromRGB(255, 80, 40))
 
-    createCrater(hitPos)
+    createFakeCrater(hitPos)
     spawnRailgunDebris(hitPos)
     screenShake(Cfg.RailgunShakeIntensity, Cfg.RailgunShakeDuration)
 end
