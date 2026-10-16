@@ -346,7 +346,7 @@ local function createChargingOrb(position)
     light.Parent = orb
     
     TweenService:Create(orb, TweenInfo.new(3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Size = Vector3.new(35, 20, 35),
+        Size = Vector3.new(35, 35, 35),
         Transparency = 0.3,
         Color = Color3.fromRGB(20, 0, 0)
     }):Play()
@@ -355,47 +355,61 @@ local function createChargingOrb(position)
 end
 
 local function createLaserFromSky(targetPos)
-    local skyPos = targetPos + Vector3.new(0, 250, 0)
-    local laser = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(255, 255, 255), 0)
-    laser.Size = Vector3.new(250, 25, 25)
-    laser.CFrame = CFrame.new(skyPos) * CFrame.Angles(0, 0, math.rad(90))
-    laser.Parent = workspace
+    local skyY = targetPos.Y + 200
+    local endY = targetPos.Y + 3
+    local totalHeight = skyY - endY
+    local spacing = 4
+    local totalCount = math.floor(totalHeight / spacing)
     
-    local light = Instance.new("PointLight")
-    light.Color = Color3.fromRGB(255, 100, 50)
-    light.Range = 100
-    light.Brightness = 30
-    light.Parent = laser
-    
-    task.delay(0.5, function()
-        if laser and laser.Parent then
-            laser.Size = Vector3.new(250, 60, 60)
-            laser.Color = Color3.fromRGB(255, 40, 0)
-        end
-    end)
-    
-    task.delay(1.5, function()
-        if laser and laser.Parent then
-            laser:Destroy()
-        end
-    end)
+    for i = 0, totalCount do
+        task.spawn(function()
+            local delay = (i / totalCount) * 0.6
+            task.wait(delay)
+            
+            local y = skyY - (i * spacing)
+            local orb = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(255, 220, 120), 0.05)
+            orb.Size = Vector3.new(22, 22, 22)
+            orb.Position = Vector3.new(targetPos.X, y, targetPos.Z)
+            orb.Parent = workspace
+            
+            local light = Instance.new("PointLight")
+            light.Color = Color3.fromRGB(255, 120, 50)
+            light.Range = 40
+            light.Brightness = 5
+            light.Parent = orb
+            
+            task.delay(0.8, function()
+                if orb and orb.Parent then
+                    orb.Color = Color3.fromRGB(255, 40, 0)
+                    orb.Size = Vector3.new(35, 35, 35)
+                end
+            end)
+            
+            Debris:AddItem(orb, 2)
+        end)
+    end
 end
 
 local function spawnNuclearCrater(hitPosition)
     local craterRadius = Cfg.RailgunCraterRadius
     
-    local scorchedEarth = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Slate, Color3.fromRGB(10, 10, 10), 0)
-    scorchedEarth.Size = Vector3.new(2, craterRadius * 2, craterRadius * 2)
-    scorchedEarth.CFrame = CFrame.new(hitPosition - Vector3.new(0, 1, 0)) * CFrame.Angles(0, 0, math.rad(90))
-    scorchedEarth.Parent = workspace
+    local scorched = newEffectPart(Enum.PartType.Ball, Enum.Material.Slate, Color3.fromRGB(15, 15, 15), 0)
+    scorched.Size = Vector3.new(craterRadius * 2.4, craterRadius * 2.4, craterRadius * 2.4)
+    scorched.Position = hitPosition - Vector3.new(0, craterRadius * 0.95, 0)
+    scorched.Parent = workspace
+    Debris:AddItem(scorched, 60)
     
-    local lava = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(255, 70, 0), 0.1)
-    lava.Size = Vector3.new(1.5, craterRadius * 1.4, craterRadius * 1.4)
-    lava.CFrame = CFrame.new(hitPosition - Vector3.new(0, 1.5, 0)) * CFrame.Angles(0, 0, math.rad(90))
+    local lava = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(255, 90, 0), 0.1)
+    lava.Size = Vector3.new(craterRadius * 1.5, craterRadius * 1.5, craterRadius * 1.5)
+    lava.Position = hitPosition - Vector3.new(0, craterRadius * 0.65, 0)
     lava.Parent = workspace
     
+    local lavaLight = Instance.new("PointLight")
+    lavaLight.Color = Color3.fromRGB(255, 100, 20)
+    lavaLight.Range = craterRadius * 2
+    lavaLight.Brightness = 3
+    lavaLight.Parent = lava
     Debris:AddItem(lava, 60)
-    Debris:AddItem(scorchedEarth, 60)
 
     for i = 1, 18 do
         task.spawn(function()
@@ -531,7 +545,7 @@ local function executeRailgunStrike(targetPos)
         createLaserFromSky(targetPos)
         screenShake(Cfg.RailgunShakeIntensity, Cfg.RailgunShakeDuration)
         
-        task.wait(0.8)
+        task.wait(1.2)
         spawnNuclearCrater(targetPos)
         spawnRailgunDebris(targetPos)
         
@@ -886,9 +900,9 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
             local result = workspace:Raycast(ray.Origin, ray.Direction * 1000, raycastParams)
             if result then
                 targetPosition = result.Position
-                targetMarker = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(255, 0, 0), 0.3)
-                targetMarker.Size = Vector3.new(0.5, 15, 15)
-                targetMarker.CFrame = CFrame.new(targetPosition) * CFrame.Angles(0, 0, math.rad(90))
+                targetMarker = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(255, 0, 0), 0.3)
+                targetMarker.Size = Vector3.new(12, 12, 12)
+                targetMarker.Position = targetPosition + Vector3.new(0, 5, 0)
                 targetMarker.Parent = workspace
                 RailgunStatus:SetDesc("目标已选定！点击「立即发射」或按 F 键")
                 isTargeting = false
