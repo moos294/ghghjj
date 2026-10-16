@@ -179,12 +179,7 @@ local function newEffectPart(shape, material, color, transparency)
 end
 
 local function addGlow(part, color, range, brightness)
-    local light = Instance.new("PointLight")
-    light.Color = color
-    light.Range = range
-    light.Brightness = brightness
-    light.Parent = part
-    return light
+    return nil
 end
 
 local targetPosition = nil
@@ -247,10 +242,14 @@ local function setDoomsdaySky(active)
 end
 
 local function createChargingOrb(position)
-    local orb = newEffectPart(Enum.PartType.Ball, Enum.Material.Glass, Color3.fromRGB(0, 0, 0), 0.1)
-    orb.Size = Vector3.new(1, 1, 1) orb.Position = position + Vector3.new(0, 2, 0) orb.Reflectance = 0.9 orb.Parent = workspace
-    local light = Instance.new("PointLight") light.Color = Color3.fromRGB(255, 0, 0) light.Range = 30 light.Brightness = 10 light.Parent = orb
-    TweenService:Create(orb, TweenInfo.new(3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = Vector3.new(45, 45, 45), Transparency = 0.3, Color = Color3.fromRGB(20, 0, 0) }):Play()
+    local orb = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(80, 40, 40), 0.1)
+    orb.Size = Vector3.new(1, 1, 1) orb.Position = position + Vector3.new(0, 2, 0) orb.Parent = workspace
+    local light = Instance.new("PointLight")
+    light.Color = Color3.fromRGB(255, 40, 20)
+    light.Range = 60
+    light.Brightness = 8
+    light.Parent = orb
+    TweenService:Create(orb, TweenInfo.new(3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = Vector3.new(45, 45, 45), Transparency = 0.2, Color = Color3.fromRGB(60, 0, 0) }):Play()
     return orb
 end
 
@@ -274,10 +273,7 @@ local function createLaserFromSky(targetPos)
             local currentY = skyY - (skyY / 25) * i
             local curPos = targetPos + Vector3.new(0, currentY, 0)
             local seg = createBeamSegment(curPos, prevPos, 45, Color3.fromRGB(255, 220, 120), 0.15)
-            if seg then
-                table.insert(segments, seg)
-                local light = Instance.new("PointLight") light.Color = Color3.fromRGB(255, 150, 50) light.Range = 150 light.Brightness = 20 light.Parent = seg
-            end
+            if seg then table.insert(segments, seg) end
             prevPos = curPos
         end)
     end
@@ -326,7 +322,11 @@ local function spawnGiantCrater(hitPosition)
     lavaBase.Size = Vector3.new(craterRadius * 1.7, 8, craterRadius * 1.7)
     lavaBase.Position = lavaCenter
     lavaBase.Parent = workspace
-    addGlow(lavaBase, Color3.fromRGB(255, 60, 0), craterRadius * 4, 15)
+    local lavaLight = Instance.new("PointLight")
+    lavaLight.Color = Color3.fromRGB(255, 80, 20)
+    lavaLight.Range = craterRadius * 2.5
+    lavaLight.Brightness = 6
+    lavaLight.Parent = lavaBase
     Debris:AddItem(lavaBase, 300)
     for i = 1, 100 do
         local angle = math.random() * math.pi * 2
@@ -447,6 +447,55 @@ local spaceAnim = {}
 local spaceFolderRef = nil
 local function addAnim(data) table.insert(spaceAnim, data) end
 
+local function makeNebula(origin, radius, color1, color2)
+    local folder = Instance.new("Folder") folder.Name = "Nebula" folder.Parent = spaceFolderRef
+    for i = 1, 60 do
+        local blob = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, (i % 2 == 0) and color1 or color2, 0.85)
+        local s = math.random(500, 1500)
+        blob.Size = Vector3.new(s, s, s)
+        local a = math.random() * math.pi * 2
+        local phi = math.acos(2 * math.random() - 1)
+        local d = radius * math.random()
+        blob.Position = origin + Vector3.new(d * math.sin(phi) * math.cos(a), d * math.cos(phi), d * math.sin(phi) * math.sin(a))
+        blob.Parent = folder
+    end
+    return folder
+end
+
+local function makeGalaxyBand(origin, length, width, thickness, color)
+    local folder = Instance.new("Folder") folder.Name = "GalaxyBand" folder.Parent = spaceFolderRef
+    local angle = math.random() * math.pi * 2
+    local dirVec = Vector3.new(math.cos(angle), math.random(-0.2, 0.2), math.sin(angle))
+    for i = 1, 400 do
+        local star = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, color, 0)
+        local s = math.random(30, 200)
+        star.Size = Vector3.new(s, s, s)
+        local offset = dirVec * (math.random() - 0.5) * length
+        local perpOffset = Vector3.new(-dirVec.Z, 0, dirVec.X) * (math.random() - 0.5) * width
+        local vertOffset = Vector3.new(0, (math.random() - 0.5) * thickness, 0)
+        star.Position = origin + offset + perpOffset + vertOffset
+        star.Parent = folder
+    end
+    return folder
+end
+
+local function makeComet(origin)
+    local folder = Instance.new("Folder") folder.Name = "Comet" folder.Parent = spaceFolderRef
+    local head = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(180, 220, 255), 0)
+    head.Size = Vector3.new(150, 150, 150)
+    head.Position = origin
+    head.Parent = folder
+    local tailDir = Vector3.new(math.random(-1, 1), math.random(-0.3, 0.3), math.random(-1, 1)).Unit
+    for i = 1, 40 do
+        local tail = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(120, 180, 255), 0.3 + i * 0.015)
+        local s = math.max(140 - i * 3, 20)
+        tail.Size = Vector3.new(s, s, s)
+        tail.Position = origin + tailDir * (i * 150)
+        tail.Parent = folder
+    end
+    return folder
+end
+
 local function makeDetailedMeteor(pos, size)
     local model = Instance.new("Model") model.Name = "Meteor" model.Parent = spaceFolderRef
     local r = math.random(160, 220)
@@ -457,8 +506,7 @@ local function makeDetailedMeteor(pos, size)
     core.Position = pos
     core.CFrame = CFrame.new(pos) * CFrame.Angles(math.random() * 6, math.random() * 6, math.random() * 6)
     core.Parent = model
-    addGlow(core, Color3.fromRGB(r, g, b), size * 4, 3)
-    for i = 1, math.random(8, 16) do
+    for i = 1, math.random(10, 18) do
         local crater = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(math.max(r - 60, 40), math.max(g - 60, 40), math.max(b - 60, 40)), 0)
         local s = size * math.random(12, 28) / 100
         crater.Size = Vector3.new(s, s, s)
@@ -468,7 +516,7 @@ local function makeDetailedMeteor(pos, size)
         crater.Position = pos + Vector3.new(d * math.sin(phi) * math.cos(angle), d * math.cos(phi), d * math.sin(phi) * math.sin(angle))
         crater.Parent = model
     end
-    for i = 1, math.random(4, 8) do
+    for i = 1, math.random(5, 10) do
         local bump = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(math.min(r + 30, 255), math.min(g + 30, 255), math.min(b + 30, 255)), 0)
         local s = size * math.random(20, 35) / 100
         bump.Size = Vector3.new(s, s * 0.7, s)
@@ -478,7 +526,7 @@ local function makeDetailedMeteor(pos, size)
         bump.Position = pos + Vector3.new(d * math.sin(phi) * math.cos(angle), d * math.cos(phi), d * math.sin(phi) * math.sin(angle))
         bump.Parent = model
     end
-    for i = 1, math.random(2, 4) do
+    for i = 1, math.random(3, 6) do
         local vein = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(math.max(r - 80, 30), math.max(g - 80, 30), math.max(b - 80, 30)), 0)
         vein.Size = Vector3.new(size * 0.6, size * 0.08, size * 0.05)
         vein.CFrame = CFrame.new(pos) * CFrame.Angles(math.random() * 6, math.random() * 6, math.random() * 6)
@@ -493,32 +541,43 @@ local function createSpaceEnvironment(origin)
     spaceFolderRef = folder
 
     local void = newEffectPart(Enum.PartType.Ball, Enum.Material.SmoothPlastic, Color3.new(0, 0, 0), 0)
-    void.Size = Vector3.new(120000, 120000, 120000)
+    void.Size = Vector3.new(150000, 150000, 150000)
     void.Position = origin
     void.Parent = folder
 
-    for i = 1, 2000 do
+    for i = 1, 3000 do
         local angle = math.random() * math.pi * 2
         local phi = math.acos(2 * math.random() - 1)
-        local dist = 40000 + math.random() * 20000
+        local dist = 45000 + math.random() * 25000
         local starPos = origin + Vector3.new(dist * math.sin(phi) * math.cos(angle), dist * math.cos(phi), dist * math.sin(phi) * math.sin(angle))
         local starColor = Color3.fromRGB(255, 255, 255)
         local starRoll = math.random()
-        if starRoll > 0.9 then starColor = Color3.fromRGB(180, 200, 255)
-        elseif starRoll > 0.8 then starColor = Color3.fromRGB(255, 220, 180)
-        elseif starRoll > 0.7 then starColor = Color3.fromRGB(255, 180, 180)
+        if starRoll > 0.92 then starColor = Color3.fromRGB(180, 200, 255)
+        elseif starRoll > 0.84 then starColor = Color3.fromRGB(255, 220, 180)
+        elseif starRoll > 0.76 then starColor = Color3.fromRGB(255, 180, 180)
+        elseif starRoll > 0.7 then starColor = Color3.fromRGB(220, 180, 255)
         end
         local star = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, starColor, 0)
-        local s = math.random(80, 250)
+        local s = math.random(60, 280)
         star.Size = Vector3.new(s, s, s)
         star.Position = starPos
         star.Parent = folder
     end
 
+    makeNebula(origin + Vector3.new(30000, 5000, -25000), 8000, Color3.fromRGB(120, 60, 220), Color3.fromRGB(200, 80, 180))
+    makeNebula(origin + Vector3.new(-35000, -8000, 28000), 9000, Color3.fromRGB(60, 140, 220), Color3.fromRGB(100, 220, 200))
+    makeGalaxyBand(origin, 80000, 8000, 1500, Color3.fromRGB(200, 210, 255))
+    makeComet(origin + Vector3.new(20000, 5000, 18000))
+    makeComet(origin + Vector3.new(-18000, -3000, -20000))
+
     local sunPos = origin
     local sun = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(255, 235, 110), 0)
     sun.Size = Vector3.new(2400, 2400, 2400) sun.Position = sunPos sun.Parent = folder
-    addGlow(sun, Color3.fromRGB(255, 220, 100), 80000, 30)
+    local sunLight = Instance.new("PointLight")
+    sunLight.Color = Color3.fromRGB(255, 220, 100)
+    sunLight.Range = 40000
+    sunLight.Brightness = 6
+    sunLight.Parent = sun
     for i = 1, 6 do
         local corona = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(255, math.max(200 - i * 30, 60), math.max(80 - i * 10, 20)), 0.75 + i * 0.02)
         corona.Size = Vector3.new(2500 + i * 280, 2500 + i * 280, 2500 + i * 280)
@@ -541,24 +600,33 @@ local function createSpaceEnvironment(origin)
         plasma.Position = sunPos + Vector3.new(d * math.sin(phi) * math.cos(angle), d * math.cos(phi), d * math.sin(phi) * math.sin(angle))
         plasma.Parent = folder
     end
+    for i = 1, 25 do
+        local sunspot = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(180, 100, 30), 0)
+        local s = math.random(80, 180)
+        sunspot.Size = Vector3.new(s, s * 0.3, s)
+        local angle = math.random() * math.pi * 2
+        local phi = math.acos(2 * math.random() - 1)
+        local d = 1180
+        sunspot.Position = sunPos + Vector3.new(d * math.sin(phi) * math.cos(angle), d * math.cos(phi), d * math.sin(phi) * math.sin(angle))
+        sunspot.Parent = folder
+    end
     addAnim({model = sun, basePos = sunPos, rotSpeed = Vector3.new(0, 0.02, 0), floatSpeed = 0, floatAmp = 0, startTime = tick(), rot = 0, isPlanet = true, core = sun})
 
     local mercuryPos = origin + Vector3.new(7000, 0, 3000)
     local mercuryModel = Instance.new("Model") mercuryModel.Name = "Mercury" mercuryModel.Parent = folder
-    local mercuryCore = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(200, 190, 180), 0)
+    local mercuryCore = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(210, 200, 190), 0)
     mercuryCore.Size = Vector3.new(600, 600, 600) mercuryCore.Position = mercuryPos mercuryCore.Parent = mercuryModel
-    addGlow(mercuryCore, Color3.fromRGB(200, 190, 180), 6000, 10)
-    for i = 1, 40 do
-        local crater = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(140, 130, 120), 0)
-        crater.Size = Vector3.new(math.random(40, 100), math.random(40, 100), math.random(40, 100))
+    for i = 1, 45 do
+        local crater = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(150, 140, 130), 0)
+        crater.Size = Vector3.new(math.random(40, 110), math.random(40, 110), math.random(40, 110))
         local a = math.random() * math.pi * 2
         local phi = math.acos(2 * math.random() - 1)
         local d = 290
         crater.Position = mercuryPos + Vector3.new(d * math.sin(phi) * math.cos(a), d * math.cos(phi), d * math.sin(phi) * math.sin(a))
         crater.Parent = mercuryModel
     end
-    for i = 1, 15 do
-        local ridge = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(170, 160, 150), 0)
+    for i = 1, 20 do
+        local ridge = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(180, 170, 160), 0)
         ridge.Size = Vector3.new(math.random(100, 250), math.random(15, 30), math.random(20, 40))
         local a = math.random() * math.pi * 2
         local phi = math.acos(2 * math.random() - 1)
@@ -571,17 +639,16 @@ local function createSpaceEnvironment(origin)
 
     local venusPos = origin + Vector3.new(-9000, 1200, -4500)
     local venusModel = Instance.new("Model") venusModel.Name = "Venus" venusModel.Parent = folder
-    local venusCore = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(245, 215, 145), 0)
+    local venusCore = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(250, 220, 150), 0)
     venusCore.Size = Vector3.new(900, 900, 900) venusCore.Position = venusPos venusCore.Parent = venusModel
-    addGlow(venusCore, Color3.fromRGB(245, 215, 145), 9000, 12)
-    for i = 1, 12 do
-        local band = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(220, 180, 120), 0.15)
+    for i = 1, 15 do
+        local band = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(230, 190, 130), 0.1)
         band.Size = Vector3.new(18, 900, 900)
-        band.CFrame = CFrame.new(venusPos + Vector3.new(0, (i - 6.5) * 70, 0)) * CFrame.Angles(0, 0, math.rad(90))
+        band.CFrame = CFrame.new(venusPos + Vector3.new(0, (i - 8) * 55, 0)) * CFrame.Angles(0, 0, math.rad(90))
         band.Parent = venusModel
     end
-    for i = 1, 20 do
-        local cloud = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(255, 235, 180), 0.4)
+    for i = 1, 30 do
+        local cloud = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(255, 235, 180), 0.35)
         cloud.Size = Vector3.new(math.random(150, 350), math.random(80, 150), math.random(150, 350))
         local a = math.random() * math.pi * 2
         local phi = math.acos(2 * math.random() - 1)
@@ -590,25 +657,24 @@ local function createSpaceEnvironment(origin)
         cloud.CFrame = CFrame.new(cloud.Position) * CFrame.Angles(math.random() * 6, math.random() * 6, math.random() * 6)
         cloud.Parent = venusModel
     end
-    local venusAtm = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(255, 220, 150), 0.9)
+    local venusAtm = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(255, 220, 150), 0.92)
     venusAtm.Size = Vector3.new(980, 980, 980) venusAtm.Position = venusPos venusAtm.Parent = venusModel
     addAnim({model = venusModel, basePos = venusPos, rotSpeed = Vector3.new(0, math.random(5, 15) / 100, 0), floatSpeed = math.random(10, 25) / 100, floatAmp = math.random(15, 40), startTime = tick(), rot = 0, isPlanet = true, core = venusCore})
 
     local earthPos = origin + Vector3.new(15000, 0, 8000)
     local earthModel = Instance.new("Model") earthModel.Name = "Earth" earthModel.Parent = folder
-    local earthCore = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(30, 110, 200), 0)
+    local earthCore = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(35, 115, 205), 0)
     earthCore.Size = Vector3.new(1100, 1100, 1100) earthCore.Position = earthPos earthCore.Parent = earthModel
-    addGlow(earthCore, Color3.fromRGB(60, 150, 230), 12000, 15)
-    local earthAtm = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(100, 190, 255), 0.85)
+    local earthAtm = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(100, 190, 255), 0.88)
     earthAtm.Size = Vector3.new(1200, 1200, 1200) earthAtm.Position = earthPos earthAtm.Parent = earthModel
-    local earthClouds = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.new(1, 1, 1), 0.8)
+    local earthClouds = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.new(1, 1, 1), 0.82)
     earthClouds.Size = Vector3.new(1160, 1160, 1160) earthClouds.Position = earthPos earthClouds.Parent = earthModel
     local continentColors = {
         Color3.fromRGB(55, 130, 55), Color3.fromRGB(70, 150, 70),
         Color3.fromRGB(90, 110, 60), Color3.fromRGB(120, 100, 60),
         Color3.fromRGB(80, 120, 50), Color3.fromRGB(60, 90, 50),
     }
-    for i = 1, 50 do
+    for i = 1, 60 do
         local land = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, continentColors[math.random(1, #continentColors)], 0)
         land.Size = Vector3.new(math.random(150, 380), math.random(80, 180), math.random(150, 380))
         local a = math.random() * math.pi * 2
@@ -626,7 +692,7 @@ local function createSpaceEnvironment(origin)
     southPolar.Size = Vector3.new(450, 280, 450)
     southPolar.Position = earthPos + Vector3.new(0, -540, 0)
     southPolar.Parent = earthModel
-    for i = 1, 25 do
+    for i = 1, 40 do
         local cloudBlock = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.new(1, 1, 1), 0.4)
         cloudBlock.Size = Vector3.new(math.random(200, 400), math.random(60, 120), math.random(200, 400))
         local a = math.random() * math.pi * 2
@@ -641,20 +707,19 @@ local function createSpaceEnvironment(origin)
     local moonOrbitRadius = 2200
     local moonModel = Instance.new("Model") moonModel.Name = "Moon" moonModel.Parent = folder
     local moonPos = earthPos + Vector3.new(moonOrbitRadius, 0, 0)
-    local moonCore = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(220, 220, 220), 0)
+    local moonCore = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(225, 220, 215), 0)
     moonCore.Size = Vector3.new(320, 320, 320) moonCore.Position = moonPos moonCore.Parent = moonModel
-    addGlow(moonCore, Color3.fromRGB(220, 220, 220), 4000, 6)
-    for i = 1, 30 do
-        local crater = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(150, 150, 150), 0)
-        crater.Size = Vector3.new(math.random(30, 80), math.random(30, 80), math.random(30, 80))
+    for i = 1, 35 do
+        local crater = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(155, 150, 145), 0)
+        crater.Size = Vector3.new(math.random(30, 90), math.random(30, 90), math.random(30, 90))
         local a = math.random() * math.pi * 2
         local phi = math.acos(2 * math.random() - 1)
         local d = 155
         crater.Position = moonPos + Vector3.new(d * math.sin(phi) * math.cos(a), d * math.cos(phi), d * math.sin(phi) * math.sin(a))
         crater.Parent = moonModel
     end
-    for i = 1, 10 do
-        local maria = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(160, 160, 160), 0)
+    for i = 1, 15 do
+        local maria = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(170, 165, 160), 0)
         maria.Size = Vector3.new(math.random(60, 130), math.random(20, 40), math.random(60, 130))
         local a = math.random() * math.pi * 2
         local phi = math.acos(2 * math.random() - 1)
@@ -665,19 +730,18 @@ local function createSpaceEnvironment(origin)
     end
     addAnim({model = moonModel, basePos = moonPos, orbitCenter = earthPos, orbitRadius = moonOrbitRadius, orbitSpeed = 0.12, rotSpeed = Vector3.new(0, 0.05, 0), startTime = tick(), rot = 0, isOrbit = true})
 
-    for i = 1, 80 do
-        local orbitRing = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(100, 140, 200), 0.85)
+    for i = 1, 100 do
+        local orbitRing = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(100, 140, 200), 0.88)
         orbitRing.Size = Vector3.new(1, 4200 + i * 8, 4200 + i * 8)
-        orbitRing.CFrame = CFrame.new(earthPos) * CFrame.Angles(math.rad(90) + (i / 80) * math.rad(25), 0, math.rad(20))
+        orbitRing.CFrame = CFrame.new(earthPos) * CFrame.Angles(math.rad(90) + (i / 100) * math.rad(25), 0, math.rad(20))
         orbitRing.Parent = folder
     end
 
     local marsPos = origin + Vector3.new(28000, -1800, 16000)
     local marsModel = Instance.new("Model") marsModel.Name = "Mars" marsModel.Parent = folder
-    local marsCore = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(220, 110, 70), 0)
+    local marsCore = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(225, 115, 75), 0)
     marsCore.Size = Vector3.new(800, 800, 800) marsCore.Position = marsPos marsCore.Parent = marsModel
-    addGlow(marsCore, Color3.fromRGB(255, 130, 80), 9000, 12)
-    local marsAtm = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(255, 150, 100), 0.9)
+    local marsAtm = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(255, 150, 100), 0.92)
     marsAtm.Size = Vector3.new(880, 880, 880) marsAtm.Position = marsPos marsAtm.Parent = marsModel
     local marsNorthPolar = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.new(1, 1, 1), 0.1)
     marsNorthPolar.Size = Vector3.new(350, 180, 350)
@@ -687,7 +751,7 @@ local function createSpaceEnvironment(origin)
     marsSouthPolar.Size = Vector3.new(320, 160, 320)
     marsSouthPolar.Position = marsPos + Vector3.new(0, -395, 0)
     marsSouthPolar.Parent = marsModel
-    for i = 1, 35 do
+    for i = 1, 40 do
         local crater = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(160, 65, 30), 0)
         crater.Size = Vector3.new(math.random(50, 140), math.random(50, 140), math.random(50, 140))
         local a = math.random() * math.pi * 2
@@ -696,7 +760,7 @@ local function createSpaceEnvironment(origin)
         crater.Position = marsPos + Vector3.new(d * math.sin(phi) * math.cos(a), d * math.cos(phi), d * math.sin(phi) * math.sin(a))
         crater.Parent = marsModel
     end
-    for i = 1, 15 do
+    for i = 1, 20 do
         local canyon = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(140, 55, 25), 0)
         canyon.Size = Vector3.new(math.random(200, 400), math.random(15, 30), math.random(30, 60))
         local a = math.random() * math.pi * 2
@@ -710,9 +774,8 @@ local function createSpaceEnvironment(origin)
 
     local jupiterPos = origin + Vector3.new(-22000, 2500, 18000)
     local jupiterModel = Instance.new("Model") jupiterModel.Name = "Jupiter" jupiterModel.Parent = folder
-    local jupiterCore = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(235, 195, 155), 0)
+    local jupiterCore = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(240, 200, 160), 0)
     jupiterCore.Size = Vector3.new(1900, 1900, 1900) jupiterCore.Position = jupiterPos jupiterCore.Parent = jupiterModel
-    addGlow(jupiterCore, Color3.fromRGB(245, 210, 170), 22000, 18)
     local jupiterColors = {
         Color3.fromRGB(185, 130, 85), Color3.fromRGB(245, 215, 175),
         Color3.fromRGB(205, 150, 105), Color3.fromRGB(235, 195, 150),
@@ -721,10 +784,10 @@ local function createSpaceEnvironment(origin)
         Color3.fromRGB(200, 145, 100), Color3.fromRGB(240, 205, 160),
         Color3.fromRGB(180, 125, 80), Color3.fromRGB(248, 220, 180),
     }
-    for i = 1, 16 do
+    for i = 1, 18 do
         local band = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, jupiterColors[i % #jupiterColors + 1], 0.1)
         band.Size = Vector3.new(35, 1880, 1880)
-        band.CFrame = CFrame.new(jupiterPos + Vector3.new(0, (i - 8.5) * 105, 0)) * CFrame.Angles(0, 0, math.rad(90))
+        band.CFrame = CFrame.new(jupiterPos + Vector3.new(0, (i - 9.5) * 95, 0)) * CFrame.Angles(0, 0, math.rad(90))
         band.Parent = jupiterModel
     end
     local redSpot = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(225, 95, 75), 0)
@@ -737,7 +800,7 @@ local function createSpaceEnvironment(origin)
     redSpotRing.Position = redSpot.Position
     redSpotRing.CFrame = redSpot.CFrame
     redSpotRing.Parent = jupiterModel
-    for i = 1, 20 do
+    for i = 1, 25 do
         local swirl = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, jupiterColors[math.random(1, #jupiterColors)], 0.15)
         swirl.Size = Vector3.new(math.random(150, 350), math.random(80, 180), math.random(150, 350))
         local a = math.random() * math.pi * 2
@@ -751,13 +814,12 @@ local function createSpaceEnvironment(origin)
 
     local saturnPos = origin + Vector3.new(-40000, -2500, -30000)
     local saturnModel = Instance.new("Model") saturnModel.Name = "Saturn" saturnModel.Parent = folder
-    local saturnCore = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(245, 225, 175), 0)
+    local saturnCore = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(248, 230, 180), 0)
     saturnCore.Size = Vector3.new(1600, 1600, 1600) saturnCore.Position = saturnPos saturnCore.Parent = saturnModel
-    addGlow(saturnCore, Color3.fromRGB(250, 230, 180), 18000, 16)
-    for i = 1, 8 do
+    for i = 1, 10 do
         local band = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(215, 190, 140), 0.15)
         band.Size = Vector3.new(30, 1580, 1580)
-        band.CFrame = CFrame.new(saturnPos + Vector3.new(0, (i - 4.5) * 100, 0)) * CFrame.Angles(0, 0, math.rad(90))
+        band.CFrame = CFrame.new(saturnPos + Vector3.new(0, (i - 5.5) * 90, 0)) * CFrame.Angles(0, 0, math.rad(90))
         band.Parent = saturnModel
     end
     local ringColors = {
@@ -766,10 +828,10 @@ local function createSpaceEnvironment(origin)
         Color3.fromRGB(250, 230, 190), Color3.fromRGB(180, 160, 125),
         Color3.fromRGB(235, 215, 175), Color3.fromRGB(200, 180, 140),
         Color3.fromRGB(245, 225, 185), Color3.fromRGB(195, 175, 135),
-        Color3.fromRGB(255, 240, 200),
+        Color3.fromRGB(255, 240, 200), Color3.fromRGB(220, 200, 160),
     }
-    for i = 1, 12 do
-        local ringRadius = 2000 + i * 160
+    for i = 1, 14 do
+        local ringRadius = 2000 + i * 150
         local ring = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, ringColors[i], 0.15)
         ring.Size = Vector3.new(25, ringRadius, ringRadius)
         ring.CFrame = CFrame.new(saturnPos) * CFrame.Angles(0, 0, math.rad(90)) * CFrame.Angles(math.rad(25), 0, math.rad(10))
@@ -781,11 +843,11 @@ local function createSpaceEnvironment(origin)
     end
     addAnim({model = saturnModel, basePos = saturnPos, rotSpeed = Vector3.new(0, math.random(5, 15) / 100, 0), floatSpeed = math.random(8, 20) / 100, floatAmp = math.random(20, 50), startTime = tick(), rot = 0, isPlanet = true, core = saturnCore})
 
-    for i = 1, 150 do
+    for i = 1, 200 do
         local angle = math.random() * math.pi * 2
-        local dist = 4000 + math.random() * 35000
-        local height = math.random(-10000, 10000)
-        local size = math.random(200, 800)
+        local dist = 4000 + math.random() * 40000
+        local height = math.random(-12000, 12000)
+        local size = math.random(200, 900)
         local pos = origin + Vector3.new(math.cos(angle) * dist, height, math.sin(angle) * dist)
         makeDetailedMeteor(pos, size)
     end
@@ -825,52 +887,51 @@ end
 local function createSpaceStationRailgun(earthPos)
     local folder = Instance.new("Folder") folder.Name = "SpaceStationRailgun" folder.Parent = workspace
     local gunBase = earthPos + Vector3.new(0, 6500, 0)
-    local core = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(110, 115, 125), 0)
+    local core = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(120, 125, 135), 0)
     core.Size = Vector3.new(900, 175, 175) core.CFrame = CFrame.new(gunBase) * CFrame.Angles(0, 0, math.rad(90)) core.Parent = folder
-    addGlow(core, Color3.fromRGB(120, 160, 220), 1500, 8)
-    local ring1 = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(80, 85, 95), 0)
+    local ring1 = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(90, 95, 105), 0)
     ring1.Size = Vector3.new(60, 275, 275) ring1.CFrame = CFrame.new(gunBase + Vector3.new(450, 0, 0)) * CFrame.Angles(0, 0, math.rad(90)) ring1.Parent = folder
-    local ring2 = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(80, 85, 95), 0)
+    local ring2 = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(90, 95, 105), 0)
     ring2.Size = Vector3.new(45, 240, 240) ring2.CFrame = CFrame.new(gunBase + Vector3.new(375, 0, 0)) * CFrame.Angles(0, 0, math.rad(90)) ring2.Parent = folder
     for i = 1, 8 do
-        local detailRing = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(120, 130, 145), 0)
+        local detailRing = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(130, 140, 155), 0)
         detailRing.Size = Vector3.new(10, 200, 200)
         detailRing.CFrame = CFrame.new(gunBase + Vector3.new(150 + i * 70, 0, 0)) * CFrame.Angles(0, 0, math.rad(90))
         detailRing.Parent = folder
     end
-    local mount = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(70, 75, 85), 0)
+    local mount = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(80, 85, 95), 0)
     mount.Size = Vector3.new(200, 500, 200) mount.Position = gunBase + Vector3.new(0, -300, 0) mount.Parent = folder
-    addGlow(mount, Color3.fromRGB(120, 160, 220), 800, 5)
     for i = 1, 4 do
-        local mountRib = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(90, 95, 105), 0)
+        local mountRib = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(100, 105, 115), 0)
         mountRib.Size = Vector3.new(220, 40, 220)
         mountRib.Position = gunBase + Vector3.new(0, -100 - i * 100, 0)
         mountRib.Parent = folder
     end
-    local barrel = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(60, 65, 75), 0)
+    local barrel = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(70, 75, 85), 0)
     barrel.Size = Vector3.new(1300, 130, 130) barrel.CFrame = CFrame.new(gunBase + Vector3.new(0, -800, 0)) * CFrame.Angles(0, 0, math.rad(90)) barrel.Parent = folder
-    addGlow(barrel, Color3.fromRGB(100, 150, 220), 1200, 6)
     for i = 1, 6 do
-        local ringSeg = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(100, 105, 115), 0)
+        local ringSeg = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(110, 115, 125), 0)
         ringSeg.Size = Vector3.new(20, 140, 140) ringSeg.CFrame = CFrame.new(gunBase + Vector3.new(0, -350 - i * 190, 0)) * CFrame.Angles(0, 0, math.rad(90)) ringSeg.Parent = folder
     end
-    local muzzle = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(80, 160, 255), 0.3)
+    local muzzle = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(100, 200, 255), 0.15)
     muzzle.Size = Vector3.new(250, 250, 250) muzzle.Position = gunBase + Vector3.new(0, -1450, 0) muzzle.Parent = folder
-    addGlow(muzzle, Color3.fromRGB(100, 200, 255), 2500, 15)
     for _, side in ipairs({-1, 1}) do
-        local panelHolder = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(80, 80, 80), 0)
+        local panelHolder = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(90, 90, 90), 0)
         panelHolder.Size = Vector3.new(35, 125, 600) panelHolder.Position = gunBase + Vector3.new(0, 0, side * 600) panelHolder.Parent = folder
         for i = 1, 8 do
-            local panel = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(30, 100, 180), 0.05)
+            local panel = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(30, 120, 220), 0)
             panel.Size = Vector3.new(30, 250, 200) panel.Position = gunBase + Vector3.new(0, 0, side * (500 + i * 150)) panel.Parent = folder
-            addGlow(panel, Color3.fromRGB(100, 180, 255), 400, 4)
-            local panelLine = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(150, 220, 255), 0.1)
+            local panelLine = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(200, 240, 255), 0)
             panelLine.Size = Vector3.new(32, 250, 7) panelLine.Position = panel.Position + Vector3.new(0, 0, -side * 100) panelLine.Parent = folder
         end
     end
-    local charge = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(150, 220, 255), 0)
+    local charge = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(180, 230, 255), 0)
     charge.Size = Vector3.new(80, 80, 80) charge.Position = muzzle.Position charge.Parent = folder
-    addGlow(charge, Color3.fromRGB(150, 220, 255), 3000, 20)
+    local chargeLight = Instance.new("PointLight")
+    chargeLight.Color = Color3.fromRGB(150, 220, 255)
+    chargeLight.Range = 2500
+    chargeLight.Brightness = 10
+    chargeLight.Parent = charge
     return folder, charge, muzzle.Position
 end
 
@@ -974,13 +1035,12 @@ local function playCinematic(targetPos)
     flash.Parent = blackoutGui
     TweenService:Create(flash, TweenInfo.new(0.4), { BackgroundTransparency = 1 }):Play()
     Debris:AddItem(flash, 0.6)
-    local beamFromGun = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(150, 220, 255), 0.05)
+    local beamFromGun = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(200, 240, 255), 0)
     local dir = (earthPos - muzzlePos).Unit
     local dist = (earthPos - muzzlePos).Magnitude
     beamFromGun.Size = Vector3.new(dist, 500, 500)
     beamFromGun.CFrame = CFrame.new(muzzlePos + dir * dist / 2, earthPos) * CFrame.Angles(0, math.rad(90), 0)
     beamFromGun.Parent = workspace
-    addGlow(beamFromGun, Color3.fromRGB(150, 220, 255), 5000, 20)
     Debris:AddItem(beamFromGun, 1.5)
     task.wait(0.5)
     TweenService:Create(blackFrame, TweenInfo.new(0.2), { BackgroundTransparency = 0 }):Play()
@@ -1010,7 +1070,7 @@ local function playCinematic(targetPos)
     letterboxGui:Destroy()
 end
 
-local Window = WindUI:CreateWindow({ Title = "力量之冠封存全能版 4.2", Icon = "zap", Author = "力量之冠", Folder = "PowerCrownSave", Theme = "Dark", Transparent = true, Resizable = false, Size = UDim2.fromOffset(460, 780) })
+local Window = WindUI:CreateWindow({ Title = "力量之冠封存全能版 4.3", Icon = "zap", Author = "力量之冠", Folder = "PowerCrownSave", Theme = "Dark", Transparent = true, Resizable = false, Size = UDim2.fromOffset(460, 780) })
 
 local MainTab = Window:Tab({ Title = "控制面板", Icon = "settings" })
 local CommonSection = MainTab:Section({ Title = "公共设置", Icon = "settings" })
@@ -1071,7 +1131,7 @@ local RailgunSection = FunTab:Section({ Title = "末日轨道炮", Icon = "zap" 
 local RailgunStatus = RailgunSection:Paragraph({ Title = "轨道炮状态", Desc = "请先点击「选择发射目标」选择地点" })
 RailgunSection:Button({ Title = "选择发射目标", Callback = function() isTargeting = true RailgunStatus:SetDesc("请在游戏画面中点击地面选择目标...") end })
 RailgunSection:Button({ Title = "立即发射", Callback = function() if not targetPosition then RailgunStatus:SetDesc("请先点击「选择发射目标」选择地点！") return end executeRailgunStrike(targetPosition) RailgunStatus:SetDesc("末日轨道炮已发射！") end })
-RailgunSection:Button({ Title = "🎬 影院模式发射 4.2", Callback = function() if not targetPosition then RailgunStatus:SetDesc("请先点击「选择发射目标」选择地点！") return end RailgunStatus:SetDesc("影院模式播放中...") task.spawn(function() playCinematic(targetPosition) RailgunStatus:SetDesc("影院模式完成！") end) end })
+RailgunSection:Button({ Title = "🎬 影院模式发射 4.3", Callback = function() if not targetPosition then RailgunStatus:SetDesc("请先点击「选择发射目标」选择地点！") return end RailgunStatus:SetDesc("影院模式播放中...") task.spawn(function() playCinematic(targetPosition) RailgunStatus:SetDesc("影院模式完成！") end) end })
 RailgunSection:Toggle({ Title = "启用 F 键发射", Value = true, Callback = function(state) Cfg.RailgunKeyBind = state end })
 RailgunSection:Slider({ Title = "发射冷却 (秒)", Value = { Min = 0.1, Max = 10, Default = 1.2 }, Step = 0.1, Callback = function(value) Cfg.RailgunCooldown = value end })
 RailgunSection:Slider({ Title = "坑洞半径", Value = { Min = 30, Max = 300, Default = 120 }, Step = 10, Callback = function(value) Cfg.RailgunCraterRadius = value end })
@@ -1100,7 +1160,7 @@ local SG = Instance.new("ScreenGui") SG.Name = "PowerCrownUI" SG.ResetOnSpawn = 
 pcall(function() SG.Parent = game:GetService("CoreGui") end) if not SG.Parent then SG.Parent = player.PlayerGui end
 local DataHUD = Instance.new("Frame") DataHUD.Size = UDim2.new(0, 210, 0, 105) DataHUD.Position = UDim2.new(0, 20, 0.3, 0) DataHUD.BackgroundColor3 = Color3.fromRGB(20, 24, 34) DataHUD.BackgroundTransparency = 0.1 DataHUD.BorderSizePixel = 0 DataHUD.ZIndex = 500 DataHUD.Parent = SG
 corner(DataHUD, 10) stroke(DataHUD, C.accent, 1.5, 0.2)
-local HUDTitle = Instance.new("TextLabel") HUDTitle.Size = UDim2.new(1, 0, 0, 24) HUDTitle.BackgroundTransparency = 1 HUDTitle.Text = "📊 力量之冠封存全能版 4.2 · 累计总数据" HUDTitle.TextColor3 = C.accent HUDTitle.Font = Enum.Font.GothamBold HUDTitle.TextSize = 12 HUDTitle.ZIndex = 501 HUDTitle.Parent = DataHUD
+local HUDTitle = Instance.new("TextLabel") HUDTitle.Size = UDim2.new(1, 0, 0, 24) HUDTitle.BackgroundTransparency = 1 HUDTitle.Text = "📊 力量之冠封存全能版 4.3 · 累计总数据" HUDTitle.TextColor3 = C.accent HUDTitle.Font = Enum.Font.GothamBold HUDTitle.TextSize = 12 HUDTitle.ZIndex = 501 HUDTitle.Parent = DataHUD
 local LabelReps = Instance.new("TextLabel") LabelReps.Size = UDim2.new(0.5, -10, 0, 18) LabelReps.Position = UDim2.new(0, 10, 0, 30) LabelReps.BackgroundTransparency = 1 LabelReps.Text = "总训练: 0" LabelReps.TextColor3 = Color3.fromRGB(230, 230, 235) LabelReps.Font = Enum.Font.Gotham LabelReps.TextSize = 11 LabelReps.TextXAlignment = Enum.TextXAlignment.Left LabelReps.ZIndex = 501 LabelReps.Parent = DataHUD
 local LabelRebirth = Instance.new("TextLabel") LabelRebirth.Size = UDim2.new(0.5, -10, 0, 18) LabelRebirth.Position = UDim2.new(0, 10, 0, 50) LabelRebirth.BackgroundTransparency = 1 LabelRebirth.Text = "总转生: 0" LabelRebirth.TextColor3 = Color3.fromRGB(230, 230, 235) LabelRebirth.Font = Enum.Font.Gotham LabelRebirth.TextSize = 11 LabelRebirth.TextXAlignment = Enum.TextXAlignment.Left LabelRebirth.ZIndex = 501 LabelRebirth.Parent = DataHUD
 local LabelTime = Instance.new("TextLabel") LabelTime.Size = UDim2.new(1, -20, 0, 18) LabelTime.Position = UDim2.new(0, 10, 0, 70) LabelTime.BackgroundTransparency = 1 LabelTime.Text = "总时长: 00:00:00" LabelTime.TextColor3 = Color3.fromRGB(230, 230, 235) LabelTime.Font = Enum.Font.Gotham LabelTime.TextSize = 11 LabelTime.TextXAlignment = Enum.TextXAlignment.Left LabelTime.ZIndex = 501 LabelTime.Parent = DataHUD
@@ -1299,4 +1359,4 @@ end)
 applyWalkSpeed()
 if Cfg.AntiIdleKick then applyAntiIdleKick() end
 
-print("[力量之冠封存全能版 4.2 · 影院模式轨道炮已就绪]")
+print("[力量之冠封存全能版 4.3 · 影院模式轨道炮已就绪]")
