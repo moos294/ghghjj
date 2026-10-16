@@ -311,10 +311,9 @@ TrainSection:Dropdown({ Title = "选择动作 (中文)", Values = ActionListCN, 
 TrainSection:Slider({ Title = "锻炼间隔 (秒)", Value = { Min = 0.1, Max = 1.0, Default = 0.2 }, Step = 0.05, Callback = function(value) Cfg.TrainInterval = value end })
 local TrainStatus = TrainSection:Paragraph({ Title = "锻炼状态", Desc = "待机中..." })
 
-local FastTrainSection = MainTab:Section({ Title = "⚡ 无间隔锻炼 (极速)", Icon = "gauge" })
+local FastTrainSection = MainTab:Section({ Title = "⚡ 无间隔锻炼 (全动作轮转)", Icon = "gauge" })
 FastTrainSection:Toggle({ Title = "无间隔自动锻炼", Value = false, Callback = function(state) Cfg.FastTrain = state end })
 FastTrainSection:Dropdown({ Title = "选择动作 (中文)", Values = ActionListCN, Value = "哑铃", Multi = false, Callback = function(selected) local cn = selected local en = ActionMap[cn] if en then Cfg.FastTrainAction = en Cfg.FastTrainActionCN = cn end end })
-FastTrainSection:Slider({ Title = "每次连发次数", Desc = "瞬间连续触发次数", Value = { Min = 1, Max = 100, Default = 20 }, Step = 1, Callback = function(value) Cfg.FastPerBeat = value end })
 FastTrainSection:Slider({ Title = "连发间隔 (秒)", Desc = "每组连发之间的停顿", Value = { Min = 0.01, Max = 1.0, Default = 0.1 }, Step = 0.01, Callback = function(value) Cfg.FastInterval = value end })
 local FastTrainStatus = FastTrainSection:Paragraph({ Title = "极速锻炼状态", Desc = "待机中..." })
 
@@ -688,11 +687,11 @@ task.spawn(function()
     }
 
     local lastSent = {}
-    for _, act in ipairs(allActions) do
-        lastSent[act] = 0
+    for i, act in ipairs(allActions) do
+        lastSent[act] = -i * 0.1
     end
 
-    local interval = 0.5
+    local cooldown = 3.0
 
     while SG.Parent do
         if Cfg.FastTrain and trainEvent then
@@ -700,7 +699,7 @@ task.spawn(function()
             local sentThisRound = 0
 
             for _, act in ipairs(allActions) do
-                if now - lastSent[act] >= interval then
+                if now - lastSent[act] >= cooldown then
                     pcall(function()
                         trainEvent:FireServer(act)
                     end)
@@ -708,6 +707,7 @@ task.spawn(function()
                     Cfg.FastTotalReps = Cfg.FastTotalReps + 1
                     Cfg.TotalReps = Cfg.TotalReps + 1
                     sentThisRound = sentThisRound + 1
+                    break
                 end
             end
 
@@ -715,18 +715,19 @@ task.spawn(function()
                 local char = player.Character
                 if char then
                     local hum = char:FindFirstChildOfClass("Humanoid")
-                    if hum then
-                        for _, track in ipairs(hum:GetPlayingAnimationTracks()) do
+                    local animator = hum and hum:FindFirstChildOfClass("Animator")
+                    if animator then
+                        for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
                             track:Stop(0)
                         end
                     end
                 end
+                FastTrainStatus:SetDesc(string.format("全动作轮转中 | 触发: %s", tostring(sentThisRound)))
+            else
+                FastTrainStatus:SetDesc("所有动作均在冷却中...")
             end
-
-            FastTrainStatus:SetDesc(string.format("全动作轮转中 | 本轮触发 %d 个动作", sentThisRound))
         end
-
-        task.wait(0.05)
+        task.wait(0.1)
     end
 end)
 
