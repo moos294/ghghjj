@@ -34,8 +34,8 @@ local Cfg = {
     Fly = false, FlySpeed = 50, WalkSpeed = 16, AntiAfk = true, TotalReps = 0,
     AutoRebirthDone = 0, ScriptStartTime = tick(), TeleportTarget = "", TeleportLoop = false,
     TeleportOffsetY = 3, AntiIdleKick = true, AntiClientKick = false, BypassGroup = false,
-    RailgunKeyBind = true, RailgunCooldown = 1.2, RailgunCraterRadius = 120,
-    RailgunCraterDepth = 80, RailgunDebrisCount = 200, RailgunShakeIntensity = 20, RailgunShakeDuration = 4,
+    RailgunKeyBind = true, RailgunCooldown = 1.2, RailgunCraterRadius = 800,
+    RailgunCraterDepth = 250, RailgunDebrisCount = 200, RailgunShakeIntensity = 20, RailgunShakeDuration = 4,
 }
 
 local C = { accent = Color3.fromRGB(60, 150, 230), text = Color3.fromRGB(230, 230, 235), textDim = Color3.fromRGB(150, 150, 160), green = Color3.fromRGB(0, 200, 140), red = Color3.fromRGB(220, 70, 80), stroke = Color3.fromRGB(48, 48, 56) }
@@ -305,111 +305,169 @@ end
 local function spawnGiantCrater(hitPosition)
     local craterRadius = Cfg.RailgunCraterRadius
     local craterDepth = Cfg.RailgunCraterDepth
+
     pcall(function()
         local terrain = workspace.Terrain
-        terrain:FillBall(hitPosition, craterRadius, Enum.Material.Air)
-        terrain:FillBall(hitPosition - Vector3.new(0, craterDepth * 0.4, 0), craterRadius * 0.85, Enum.Material.Air)
-        terrain:FillBall(hitPosition - Vector3.new(0, craterDepth * 0.8, 0), craterRadius * 0.6, Enum.Material.Air)
-        terrain:FillBall(hitPosition - Vector3.new(0, craterDepth * 0.9, 0), craterRadius * 0.7, Enum.Material.CrackedLava)
-        for i = 1, 50 do
-            local a = (i / 50) * math.pi * 2
-            local dist = craterRadius * (0.9 + math.random() * 0.4)
-            terrain:FillBall(hitPosition + Vector3.new(math.cos(a) * dist, math.random(-3, 0), math.sin(a) * dist), math.random(8, 18), Enum.Material.Basalt)
+        terrain:FillBall(hitPosition - Vector3.new(0, craterDepth * 0.95, 0), craterRadius * 0.35, Enum.Material.Air)
+        terrain:FillBall(hitPosition - Vector3.new(0, craterDepth * 0.8, 0), craterRadius * 0.55, Enum.Material.Air)
+        terrain:FillBall(hitPosition - Vector3.new(0, craterDepth * 0.55, 0), craterRadius * 0.75, Enum.Material.Air)
+        terrain:FillBall(hitPosition - Vector3.new(0, craterDepth * 0.25, 0), craterRadius * 1.0, Enum.Material.Air)
+        terrain:FillBall(hitPosition - Vector3.new(0, craterDepth * 1.0, 0), craterRadius * 0.5, Enum.Material.CrackedLava)
+        terrain:FillBall(hitPosition - Vector3.new(0, craterDepth * 0.95, 0), craterRadius * 0.35, Enum.Material.CrackedLava)
+        for i = 1, 4 do
+            local ringRadius = craterRadius * (0.5 + i * 0.15)
+            local ringY = hitPosition.Y - craterDepth * (1.0 - i * 0.2)
+            for j = 1, 40 do
+                local a = (j / 40) * math.pi * 2
+                local x = math.cos(a) * ringRadius
+                local z = math.sin(a) * ringRadius
+                terrain:FillBall(Vector3.new(hitPosition.X + x, ringY + math.random(-3, 3), hitPosition.Z + z), math.random(6, 14), Enum.Material.Basalt)
+            end
+        end
+        for i = 1, 100 do
+            local a = (i / 100) * math.pi * 2
+            local dist = craterRadius * (1.0 + math.random() * 0.15)
+            local x = math.cos(a) * dist
+            local z = math.sin(a) * dist
+            local height = math.random(6, 18)
+            terrain:FillBall(Vector3.new(hitPosition.X + x, hitPosition.Y + height, hitPosition.Z + z), math.random(10, 22), Enum.Material.Basalt)
+            terrain:FillBall(Vector3.new(hitPosition.X + x * 1.15, hitPosition.Y + height * 1.4, hitPosition.Z + z * 1.15), math.random(6, 14), Enum.Material.Slate)
+        end
+        for i = 1, 150 do
+            local a = (i / 150) * math.pi * 2 + math.random(-0.05, 0.05)
+            local dist = craterRadius * (1.15 + math.random() * 0.5)
+            local x = math.cos(a) * dist
+            local z = math.sin(a) * dist
+            local height = math.random(2, 10)
+            terrain:FillBall(Vector3.new(hitPosition.X + x, hitPosition.Y + height, hitPosition.Z + z), math.random(4, 12), Enum.Material.Slate)
         end
     end)
-    local lavaCenter = hitPosition - Vector3.new(0, craterDepth * 0.8, 0)
+
+    local lavaCenter = hitPosition - Vector3.new(0, craterDepth * 0.9, 0)
     local lavaBase = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(255, 70, 0), 0)
-    lavaBase.Size = Vector3.new(craterRadius * 1.7, 8, craterRadius * 1.7)
+    lavaBase.Size = Vector3.new(craterRadius * 1.0, 12, craterRadius * 1.0)
     lavaBase.Position = lavaCenter
     lavaBase.Parent = workspace
     local lavaLight = Instance.new("PointLight")
     lavaLight.Color = Color3.fromRGB(255, 80, 20)
-    lavaLight.Range = craterRadius * 2.5
-    lavaLight.Brightness = 6
+    lavaLight.Range = craterRadius * 3
+    lavaLight.Brightness = 8
     lavaLight.Parent = lavaBase
     Debris:AddItem(lavaBase, 300)
-    for i = 1, 100 do
+
+    local lavaShallow = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(255, 140, 40), 0)
+    lavaShallow.Size = Vector3.new(craterRadius * 1.5, 8, craterRadius * 1.5)
+    lavaShallow.Position = lavaCenter - Vector3.new(0, -2, 0)
+    lavaShallow.Parent = workspace
+    Debris:AddItem(lavaShallow, 300)
+
+    for i = 1, 300 do
         local angle = math.random() * math.pi * 2
-        local r = math.random() * craterRadius * 0.9
+        local r = math.random() * craterRadius * 1.1
         local crack = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(255, 30, 0), 0)
-        crack.Size = Vector3.new(math.random(6, 14), 10, math.random(20, 45))
-        crack.CFrame = CFrame.new(lavaCenter + Vector3.new(math.cos(angle) * r, 4, math.sin(angle) * r)) * CFrame.Angles(0, angle + math.random(-0.9, 0.9), 0)
+        crack.Size = Vector3.new(math.random(6, 16), 12, math.random(30, 70))
+        local crackY = hitPosition.Y - craterDepth * (1.0 - r / (craterRadius * 1.2)) * math.random(0.5, 1.0)
+        crack.CFrame = CFrame.new(Vector3.new(hitPosition.X + math.cos(angle) * r, crackY, hitPosition.Z + math.sin(angle) * r)) * CFrame.Angles(0, angle + math.random(-0.9, 0.9), 0)
         crack.Parent = workspace
         Debris:AddItem(crack, 300)
     end
-    for i = 1, 150 do
+
+    for i = 1, 400 do
         task.spawn(function()
-            task.wait(math.random(0, 20) / 10)
+            task.wait(math.random(0, 30) / 10)
             local splash = Instance.new("Part")
             splash.Shape = Enum.PartType.Ball
             splash.Material = Enum.Material.Neon
             splash.Color = Color3.fromRGB(255, 80, 0)
-            splash.Size = Vector3.new(math.random(8, 25), math.random(8, 25), math.random(8, 25))
+            splash.Size = Vector3.new(math.random(10, 40), math.random(10, 40), math.random(10, 40))
             splash.Anchored = false splash.CanCollide = true splash.CanQuery = false
-            splash.Position = hitPosition + Vector3.new(math.random(-30, 30), math.random(5, 35), math.random(-30, 30))
+            splash.Position = hitPosition + Vector3.new(math.random(-60, 60), math.random(5, 50), math.random(-60, 60))
             splash.Parent = workspace
-            splash.AssemblyLinearVelocity = Vector3.new(math.random(-150, 150), math.random(80, 200), math.random(-150, 150))
-            splash.AssemblyAngularVelocity = Vector3.new(math.random(-60, 60), math.random(-60, 60), math.random(-60, 60))
-            Debris:AddItem(splash, 15)
+            splash.AssemblyLinearVelocity = Vector3.new(math.random(-250, 250), math.random(150, 350), math.random(-250, 250))
+            splash.AssemblyAngularVelocity = Vector3.new(math.random(-100, 100), math.random(-100, 100), math.random(-100, 100))
+            Debris:AddItem(splash, 20)
         end)
     end
+
     for i = 1, Cfg.RailgunDebrisCount do
         task.spawn(function()
-            task.wait(math.random(0, 15) / 10)
-            local w = math.random(20, 70) / 10
-            local h = math.random(20, 70) / 10
-            local d = math.random(20, 70) / 10
+            task.wait(math.random(0, 20) / 10)
+            local w = math.random(30, 120) / 10
+            local h = math.random(30, 120) / 10
+            local d = math.random(30, 120) / 10
             local rock = Instance.new("Part")
             rock.Shape = Enum.PartType.Block
             rock.Material = Enum.Material.Neon
-            rock.Color = Color3.fromRGB(math.random(70, 110), math.random(70, 110), math.random(70, 110))
+            rock.Color = Color3.fromRGB(math.random(60, 100), math.random(60, 100), math.random(60, 100))
             rock.Size = Vector3.new(w, h, d)
             rock.Anchored = false rock.CanCollide = true rock.CanQuery = false
             local angle = math.random() * math.pi * 2
-            local dist = craterRadius * (0.6 + math.random() * 0.6)
-            rock.Position = hitPosition + Vector3.new(math.cos(angle) * dist, math.random(5, 30), math.sin(angle) * dist)
+            local dist = craterRadius * (0.4 + math.random() * 0.9)
+            rock.Position = hitPosition + Vector3.new(math.cos(angle) * dist, math.random(10, 60), math.sin(angle) * dist)
             rock.CFrame = CFrame.new(rock.Position) * CFrame.Angles(math.random() * 6, math.random() * 6, math.random() * 6)
             rock.Parent = workspace
-            rock.AssemblyLinearVelocity = Vector3.new(math.random(-40, 40), math.random(20, 50), math.random(-40, 40))
-            rock.AssemblyAngularVelocity = Vector3.new(math.random(-30, 30), math.random(-30, 30), math.random(-30, 30))
+            rock.AssemblyLinearVelocity = Vector3.new(math.random(-80, 80), math.random(20, 60), math.random(-80, 80))
+            rock.AssemblyAngularVelocity = Vector3.new(math.random(-60, 60), math.random(-60, 60), math.random(-60, 60))
             task.spawn(function()
-                for _ = 1, 400 do
+                for _ = 1, 600 do
                     if not rock or not rock.Parent then break end
                     local toCenter = Vector3.new(hitPosition.X - rock.Position.X, 0, hitPosition.Z - rock.Position.Z)
                     local mag = toCenter.Magnitude
-                    if mag > 1 then
+                    if mag > 2 then
                         local dir = toCenter.Unit
-                        rock.AssemblyLinearVelocity = Vector3.new(dir.X * 20, rock.AssemblyLinearVelocity.Y, dir.Z * 20)
+                        rock.AssemblyLinearVelocity = Vector3.new(dir.X * 25, rock.AssemblyLinearVelocity.Y, dir.Z * 25)
                     else
                         rock.AssemblyLinearVelocity = Vector3.new(0, rock.AssemblyLinearVelocity.Y, 0)
                     end
                     task.wait(0.05)
                 end
             end)
-            Debris:AddItem(rock, 60)
+            Debris:AddItem(rock, 90)
         end)
     end
+
     task.spawn(function()
-        for _ = 1, 300 do
-            task.wait(0.15)
+        for _ = 1, 600 do
+            task.wait(0.1)
             local angle = math.random() * math.pi * 2
-            local r = math.random() * craterRadius * 0.85
+            local r = math.random() * craterRadius * 0.9
             local glow = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(255, 100, 20), 0)
-            glow.Size = Vector3.new(math.random(6, 16), math.random(6, 16), math.random(6, 16))
-            glow.Position = lavaCenter + Vector3.new(math.cos(angle) * r, math.random(0, 8), math.sin(angle) * r)
-            glow.Anchored = false glow.CanCollide = false glow.Parent = workspace
-            glow.AssemblyLinearVelocity = Vector3.new(math.random(-40, 40), math.random(30, 80), math.random(-40, 40))
-            Debris:AddItem(glow, 4)
+            glow.Size = Vector3.new(math.random(8, 22), math.random(8, 22), math.random(8, 22))
+            glow.Position = lavaCenter + Vector3.new(math.cos(angle) * r, math.random(0, 15), math.sin(angle) * r)
+            glow.Anchored = false
+            glow.CanCollide = false
+            glow.Parent = workspace
+            glow.AssemblyLinearVelocity = Vector3.new(math.random(-60, 60), math.random(50, 150), math.random(-60, 60))
+            Debris:AddItem(glow, 5)
         end
     end)
+
     local smokeHolder = newEffectPart(Enum.PartType.Ball, Enum.Material.SmoothPlastic, Color3.new(1,1,1), 1)
-    smokeHolder.Size = Vector3.new(2, 2, 2) smokeHolder.Position = hitPosition + Vector3.new(0, 50, 0) smokeHolder.Parent = workspace
-    local smoke = Instance.new("Smoke") smoke.Color = Color3.fromRGB(40, 40, 40) smoke.Opacity = 0.85 smoke.RiseVelocity = 45 smoke.Size = 60 smoke.Parent = smokeHolder
+    smokeHolder.Size = Vector3.new(2, 2, 2)
+    smokeHolder.Position = hitPosition + Vector3.new(0, craterDepth * 0.5, 0)
+    smokeHolder.Parent = workspace
+    local smoke = Instance.new("Smoke")
+    smoke.Color = Color3.fromRGB(40, 40, 40)
+    smoke.Opacity = 0.9
+    smoke.RiseVelocity = 60
+    smoke.Size = 100
+    smoke.Parent = smokeHolder
     local smokeCap = newEffectPart(Enum.PartType.Ball, Enum.Material.SmoothPlastic, Color3.new(1,1,1), 1)
-    smokeCap.Size = Vector3.new(2, 2, 2) smokeCap.Position = hitPosition + Vector3.new(0, 250, 0) smokeCap.Parent = workspace
-    local smoke2 = Instance.new("Smoke") smoke2.Color = Color3.fromRGB(30, 30, 30) smoke2.Opacity = 0.95 smoke2.RiseVelocity = 25 smoke2.Size = 150 smoke2.Parent = smokeCap
-    task.delay(60, function() if smoke then smoke.Enabled = false end if smoke2 then smoke2.Enabled = false end end)
-    Debris:AddItem(smokeHolder, 70) Debris:AddItem(smokeCap, 70)
+    smokeCap.Size = Vector3.new(2, 2, 2)
+    smokeCap.Position = hitPosition + Vector3.new(0, 500, 0)
+    smokeCap.Parent = workspace
+    local smoke2 = Instance.new("Smoke")
+    smoke2.Color = Color3.fromRGB(30, 30, 30)
+    smoke2.Opacity = 0.95
+    smoke2.RiseVelocity = 35
+    smoke2.Size = 250
+    smoke2.Parent = smokeCap
+    task.delay(90, function()
+        if smoke then smoke.Enabled = false end
+        if smoke2 then smoke2.Enabled = false end
+    end)
+    Debris:AddItem(smokeHolder, 100)
+    Debris:AddItem(smokeCap, 100)
 end
 
 local function screenShake(intensity, duration)
@@ -1070,7 +1128,7 @@ local function playCinematic(targetPos)
     letterboxGui:Destroy()
 end
 
-local Window = WindUI:CreateWindow({ Title = "力量之冠封存全能版 4.3", Icon = "zap", Author = "力量之冠", Folder = "PowerCrownSave", Theme = "Dark", Transparent = true, Resizable = false, Size = UDim2.fromOffset(460, 780) })
+local Window = WindUI:CreateWindow({ Title = "力量之冠封存全能版 4.4", Icon = "zap", Author = "力量之冠", Folder = "PowerCrownSave", Theme = "Dark", Transparent = true, Resizable = false, Size = UDim2.fromOffset(460, 780) })
 
 local MainTab = Window:Tab({ Title = "控制面板", Icon = "settings" })
 local CommonSection = MainTab:Section({ Title = "公共设置", Icon = "settings" })
@@ -1131,11 +1189,11 @@ local RailgunSection = FunTab:Section({ Title = "末日轨道炮", Icon = "zap" 
 local RailgunStatus = RailgunSection:Paragraph({ Title = "轨道炮状态", Desc = "请先点击「选择发射目标」选择地点" })
 RailgunSection:Button({ Title = "选择发射目标", Callback = function() isTargeting = true RailgunStatus:SetDesc("请在游戏画面中点击地面选择目标...") end })
 RailgunSection:Button({ Title = "立即发射", Callback = function() if not targetPosition then RailgunStatus:SetDesc("请先点击「选择发射目标」选择地点！") return end executeRailgunStrike(targetPosition) RailgunStatus:SetDesc("末日轨道炮已发射！") end })
-RailgunSection:Button({ Title = "🎬 影院模式发射 4.3", Callback = function() if not targetPosition then RailgunStatus:SetDesc("请先点击「选择发射目标」选择地点！") return end RailgunStatus:SetDesc("影院模式播放中...") task.spawn(function() playCinematic(targetPosition) RailgunStatus:SetDesc("影院模式完成！") end) end })
+RailgunSection:Button({ Title = "🎬 影院模式发射 4.4", Callback = function() if not targetPosition then RailgunStatus:SetDesc("请先点击「选择发射目标」选择地点！") return end RailgunStatus:SetDesc("影院模式播放中...") task.spawn(function() playCinematic(targetPosition) RailgunStatus:SetDesc("影院模式完成！") end) end })
 RailgunSection:Toggle({ Title = "启用 F 键发射", Value = true, Callback = function(state) Cfg.RailgunKeyBind = state end })
 RailgunSection:Slider({ Title = "发射冷却 (秒)", Value = { Min = 0.1, Max = 10, Default = 1.2 }, Step = 0.1, Callback = function(value) Cfg.RailgunCooldown = value end })
-RailgunSection:Slider({ Title = "坑洞半径", Value = { Min = 30, Max = 300, Default = 120 }, Step = 10, Callback = function(value) Cfg.RailgunCraterRadius = value end })
-RailgunSection:Slider({ Title = "坑洞深度", Value = { Min = 20, Max = 200, Default = 80 }, Step = 10, Callback = function(value) Cfg.RailgunCraterDepth = value end })
+RailgunSection:Slider({ Title = "坑洞半径", Value = { Min = 30, Max = 1500, Default = 800 }, Step = 10, Callback = function(value) Cfg.RailgunCraterRadius = value end })
+RailgunSection:Slider({ Title = "坑洞深度", Value = { Min = 20, Max = 500, Default = 250 }, Step = 10, Callback = function(value) Cfg.RailgunCraterDepth = value end })
 RailgunSection:Slider({ Title = "碎石数量", Value = { Min = 0, Max = 400, Default = 200 }, Step = 20, Callback = function(value) Cfg.RailgunDebrisCount = value end })
 RailgunSection:Slider({ Title = "屏幕震动强度", Value = { Min = 0, Max = 50, Default = 20 }, Step = 1, Callback = function(value) Cfg.RailgunShakeIntensity = value end })
 
@@ -1160,7 +1218,7 @@ local SG = Instance.new("ScreenGui") SG.Name = "PowerCrownUI" SG.ResetOnSpawn = 
 pcall(function() SG.Parent = game:GetService("CoreGui") end) if not SG.Parent then SG.Parent = player.PlayerGui end
 local DataHUD = Instance.new("Frame") DataHUD.Size = UDim2.new(0, 210, 0, 105) DataHUD.Position = UDim2.new(0, 20, 0.3, 0) DataHUD.BackgroundColor3 = Color3.fromRGB(20, 24, 34) DataHUD.BackgroundTransparency = 0.1 DataHUD.BorderSizePixel = 0 DataHUD.ZIndex = 500 DataHUD.Parent = SG
 corner(DataHUD, 10) stroke(DataHUD, C.accent, 1.5, 0.2)
-local HUDTitle = Instance.new("TextLabel") HUDTitle.Size = UDim2.new(1, 0, 0, 24) HUDTitle.BackgroundTransparency = 1 HUDTitle.Text = "📊 力量之冠封存全能版 4.3 · 累计总数据" HUDTitle.TextColor3 = C.accent HUDTitle.Font = Enum.Font.GothamBold HUDTitle.TextSize = 12 HUDTitle.ZIndex = 501 HUDTitle.Parent = DataHUD
+local HUDTitle = Instance.new("TextLabel") HUDTitle.Size = UDim2.new(1, 0, 0, 24) HUDTitle.BackgroundTransparency = 1 HUDTitle.Text = "📊 力量之冠封存全能版 4.4 · 累计总数据" HUDTitle.TextColor3 = C.accent HUDTitle.Font = Enum.Font.GothamBold HUDTitle.TextSize = 12 HUDTitle.ZIndex = 501 HUDTitle.Parent = DataHUD
 local LabelReps = Instance.new("TextLabel") LabelReps.Size = UDim2.new(0.5, -10, 0, 18) LabelReps.Position = UDim2.new(0, 10, 0, 30) LabelReps.BackgroundTransparency = 1 LabelReps.Text = "总训练: 0" LabelReps.TextColor3 = Color3.fromRGB(230, 230, 235) LabelReps.Font = Enum.Font.Gotham LabelReps.TextSize = 11 LabelReps.TextXAlignment = Enum.TextXAlignment.Left LabelReps.ZIndex = 501 LabelReps.Parent = DataHUD
 local LabelRebirth = Instance.new("TextLabel") LabelRebirth.Size = UDim2.new(0.5, -10, 0, 18) LabelRebirth.Position = UDim2.new(0, 10, 0, 50) LabelRebirth.BackgroundTransparency = 1 LabelRebirth.Text = "总转生: 0" LabelRebirth.TextColor3 = Color3.fromRGB(230, 230, 235) LabelRebirth.Font = Enum.Font.Gotham LabelRebirth.TextSize = 11 LabelRebirth.TextXAlignment = Enum.TextXAlignment.Left LabelRebirth.ZIndex = 501 LabelRebirth.Parent = DataHUD
 local LabelTime = Instance.new("TextLabel") LabelTime.Size = UDim2.new(1, -20, 0, 18) LabelTime.Position = UDim2.new(0, 10, 0, 70) LabelTime.BackgroundTransparency = 1 LabelTime.Text = "总时长: 00:00:00" LabelTime.TextColor3 = Color3.fromRGB(230, 230, 235) LabelTime.Font = Enum.Font.Gotham LabelTime.TextSize = 11 LabelTime.TextXAlignment = Enum.TextXAlignment.Left LabelTime.ZIndex = 501 LabelTime.Parent = DataHUD
@@ -1359,4 +1417,4 @@ end)
 applyWalkSpeed()
 if Cfg.AntiIdleKick then applyAntiIdleKick() end
 
-print("[力量之冠封存全能版 4.3 · 影院模式轨道炮已就绪]")
+print("[力量之冠封存全能版 4.4 · 影院模式轨道炮已就绪]")
