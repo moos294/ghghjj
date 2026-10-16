@@ -727,6 +727,7 @@ end)
 applyWalkSpeed()
 if Cfg.AntiIdleKick then applyAntiIdleKick() end
 
+do
 local T = {
 	lockEnd = 2,
 	ascentEnd = 6,
@@ -760,29 +761,17 @@ local RED = Color3.fromRGB(255, 56, 56)
 
 local function new(class, props, parent)
 	local inst = Instance.new(class)
-	for k, v in pairs(props) do
-		inst[k] = v
-	end
-	if parent then
-		inst.Parent = parent
-	end
+	for k, v in pairs(props) do inst[k] = v end
+	if parent then inst.Parent = parent end
 	return inst
 end
 
 local function vpart(props, parent)
 	local p = new("Part", {
-		Anchored = true,
-		CanCollide = false,
-		CanQuery = false,
-		CanTouch = false,
-		CastShadow = false,
-		Material = Enum.Material.SmoothPlastic,
-		TopSurface = Enum.SurfaceType.Smooth,
-		BottomSurface = Enum.SurfaceType.Smooth,
+		Anchored = true, CanCollide = false, CanQuery = false, CanTouch = false, CastShadow = false,
+		Material = Enum.Material.SmoothPlastic, TopSurface = Enum.SurfaceType.Smooth, BottomSurface = Enum.SurfaceType.Smooth,
 	}, nil)
-	for k, v in pairs(props) do
-		p[k] = v
-	end
+	for k, v in pairs(props) do p[k] = v end
 	p.Parent = parent
 	return p
 end
@@ -798,51 +787,30 @@ local function bigSphere(parent, pos, diameter, color, material, transparency)
 	return p
 end
 
-local function clamp01(x)
-	return math.clamp(x, 0, 1)
-end
-
-local function lerp(a, b, t)
-	return a + (b - a) * t
-end
-
-local function smooth(t)
-	t = clamp01(t)
-	return t * t * (3 - 2 * t)
-end
-
-local function gauss()
-	return math.random() + math.random() + math.random() - 1.5
-end
-
-local function rotY(v, a)
-	return CFrame.Angles(0, a, 0):VectorToWorldSpace(v)
-end
-
+local function clamp01(x) return math.clamp(x, 0, 1) end
+local function lerp(a, b, t) return a + (b - a) * t end
+local function smooth(t) t = clamp01(t); return t * t * (3 - 2 * t) end
+local function gauss() return math.random() + math.random() + math.random() - 1.5 end
+local function rotY(v, a) return CFrame.Angles(0, a, 0):VectorToWorldSpace(v) end
 local function randDir()
 	local z = math.random() * 2 - 1
 	local a = math.random() * math.pi * 2
 	local r = math.sqrt(1 - z * z)
 	return Vector3.new(r * math.cos(a), z, r * math.sin(a))
 end
-
 local function tween(inst, time, props, style, dir)
 	local tw = TweenService:Create(inst, TweenInfo.new(time, style or Enum.EasingStyle.Quad, dir or Enum.EasingDirection.Out), props)
 	tw:Play()
 	return tw
 end
 
-local fxFolder = new("Folder", { Name = "SpaceCannonFX" }, Workspace)
+local fxFolder = new("Folder", { Name = "SpaceCannonFX" }, workspace)
 
 local function playSound(id, volume, speed, looped)
-	if not id or id == "" then
-		return nil
-	end
-	local s = new("Sound", { SoundId = id, Volume = volume or 1, PlaybackSpeed = speed or 1, Looped = looped or false }, SoundService)
+	if not id or id == "" then return nil end
+	local s = new("Sound", { SoundId = id, Volume = volume or 1, PlaybackSpeed = speed or 1, Looped = looped or false }, game:GetService("SoundService"))
 	s:Play()
-	if not looped then
-		Debris:AddItem(s, 8)
-	end
+	if not looped then game:GetService("Debris"):AddItem(s, 8) end
 	return s
 end
 
@@ -850,106 +818,53 @@ local state = "idle"
 local selectedWeapon = nil
 local lastFire = -1e9
 
-local flash = new("Frame", {
-	Size = UDim2.fromScale(1, 1),
-	BackgroundColor3 = Color3.new(1, 1, 1),
-	BackgroundTransparency = 1,
-	BorderSizePixel = 0,
-	ZIndex = 100,
-	Active = false,
-}, SG)
 local function setFlash(a, color)
-	flash.BackgroundColor3 = color or Color3.new(1, 1, 1)
-	flash.BackgroundTransparency = 1 - clamp01(a)
-end
-
-local barTop = new("Frame", { Size = UDim2.new(1, 0, 0, 0), BackgroundColor3 = Color3.new(0, 0, 0), BorderSizePixel = 0, ZIndex = 90 }, SG)
-local barBottom = new("Frame", {
-	AnchorPoint = Vector2.new(0, 1),
-	Position = UDim2.fromScale(0, 1),
-	Size = UDim2.new(1, 0, 0, 0),
-	BackgroundColor3 = Color3.new(0, 0, 0),
-	BorderSizePixel = 0,
-	ZIndex = 90,
-}, SG)
-local function showBars(on)
-	local s = UDim2.new(1, 0, on and 0.1 or 0, 0)
-	tween(barTop, 0.8, { Size = s })
-	tween(barBottom, 0.8, { Size = s })
-end
-
-local caption = new("TextLabel", {
-	AnchorPoint = Vector2.new(0.5, 1),
-	Position = UDim2.new(0.5, 0, 0.9, 0),
-	Size = UDim2.new(0.9, 0, 0, 40),
-	BackgroundTransparency = 1,
-	Text = "",
-	TextColor3 = Color3.new(1, 1, 1),
-	Font = Enum.Font.GothamBold,
-	TextSize = 22,
-	TextTransparency = 1,
-	TextStrokeTransparency = 0.6,
-	ZIndex = 95,
-}, SG)
-local function setCaption(text, color)
-	if text == "" then
-		tween(caption, 0.4, { TextTransparency = 1 })
-		return
+	if color then
+		local flashGui = Instance.new("Frame", SG)
+		flashGui.Size = UDim2.fromScale(1, 1)
+		flashGui.BackgroundColor3 = color
+		flashGui.BackgroundTransparency = 1 - clamp01(a)
+		flashGui.BorderSizePixel = 0
+		flashGui.ZIndex = 100
+		flashGui.Active = false
+		game:GetService("Debris"):AddItem(flashGui, 0.5)
+	else
+		local flashGui = Instance.new("Frame", SG)
+		flashGui.Size = UDim2.fromScale(1, 1)
+		flashGui.BackgroundColor3 = Color3.new(1, 1, 1)
+		flashGui.BackgroundTransparency = 1 - clamp01(a)
+		flashGui.BorderSizePixel = 0
+		flashGui.ZIndex = 100
+		flashGui.Active = false
+		game:GetService("Debris"):AddItem(flashGui, 0.5)
 	end
-	caption.Text = text
-	caption.TextColor3 = color or Color3.new(1, 1, 1)
-	caption.TextTransparency = 1
-	tween(caption, 0.4, { TextTransparency = 0 })
 end
 
-local toastLabel = new("TextLabel", {
-	AnchorPoint = Vector2.new(0.5, 0),
-	Position = UDim2.new(0.5, 0, 0, 110),
-	Size = UDim2.new(0.8, 0, 0, 36),
-	BackgroundColor3 = Color3.fromRGB(20, 22, 30),
-	BackgroundTransparency = 0.1,
-	TextColor3 = Color3.fromRGB(255, 220, 220),
-	Font = Enum.Font.GothamMedium,
-	TextSize = 18,
-	Text = "",
-	Visible = false,
-	ZIndex = 40,
-}, SG)
-new("UICorner", { CornerRadius = UDim.new(0, 10) }, toastLabel)
-local toastId = 0
+local function showBars(on) end
+
+local function setCaption(text, color)
+	if text == "" then return end
+	WindUI:Notify({ Title = "系统提示", Content = text, Duration = 2 })
+end
+
 local function toast(msg)
-	toastId += 1
-	local id = toastId
-	toastLabel.Text = msg
-	toastLabel.Visible = true
-	task.delay(2.2, function()
-		if id == toastId then
-			toastLabel.Visible = false
-		end
-	end)
+	WindUI:Notify({ Title = "提示", Content = msg, Duration = 2 })
 end
 
 local fx = {}
 local function ensureFx()
-	if fx.cc then
-		return
-	end
+	if fx.cc then return end
 	fx.cc = new("ColorCorrectionEffect", { Name = "SC_CC" }, Lighting)
 	fx.bloom = new("BloomEffect", { Name = "SC_Bloom", Intensity = 0.5, Size = 28, Threshold = 1 }, Lighting)
 	fx.blur = new("BlurEffect", { Name = "SC_Blur", Size = 0 }, Lighting)
 end
 local function clearFx()
-	for k, v in pairs(fx) do
-		v:Destroy()
-		fx[k] = nil
-	end
+	for k, v in pairs(fx) do v:Destroy() fx[k] = nil end
 end
 
 local savedLighting = nil
 local function enterSpaceLighting()
-	if savedLighting then
-		return
-	end
+	if savedLighting then return end
 	savedLighting = { props = {}, removed = {} }
 	for _, k in ipairs({ "ClockTime", "Ambient", "OutdoorAmbient", "Brightness", "FogStart", "FogEnd", "FogColor", "ExposureCompensation" }) do
 		savedLighting.props[k] = Lighting[k]
@@ -967,31 +882,13 @@ local function enterSpaceLighting()
 	Lighting.FogStart = 1e8
 	Lighting.FogEnd = 1e8
 	Lighting.ExposureCompensation = 0
-	savedLighting.sky = new("Sky", {
-		Name = "SC_Sky",
-		SkyboxBk = "",
-		SkyboxDn = "",
-		SkyboxFt = "",
-		SkyboxLf = "",
-		SkyboxRt = "",
-		SkyboxUp = "",
-		StarCount = 0,
-		CelestialBodiesShown = false,
-	}, Lighting)
+	savedLighting.sky = new("Sky", { Name = "SC_Sky", SkyboxBk = "", SkyboxDn = "", SkyboxFt = "", SkyboxLf = "", SkyboxRt = "", SkyboxUp = "", StarCount = 0, CelestialBodiesShown = false }, Lighting)
 end
 local function restoreLighting()
-	if not savedLighting then
-		return
-	end
-	if savedLighting.sky then
-		savedLighting.sky:Destroy()
-	end
-	for k, v in pairs(savedLighting.props) do
-		Lighting[k] = v
-	end
-	for _, c in ipairs(savedLighting.removed) do
-		c.Parent = Lighting
-	end
+	if not savedLighting then return end
+	if savedLighting.sky then savedLighting.sky:Destroy() end
+	for k, v in pairs(savedLighting.props) do Lighting[k] = v end
+	for _, c in ipairs(savedLighting.removed) do c.Parent = Lighting end
 	savedLighting = nil
 end
 
@@ -999,39 +896,27 @@ local function setControls(enabled)
 	pcall(function()
 		local pm = require(player:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule"))
 		local c = pm:GetControls()
-		if enabled then
-			c:Enable()
-		else
-			c:Disable()
-		end
+		if enabled then c:Enable() else c:Disable() end
 	end)
 end
 local function setCoreGui(enabled)
-	pcall(function()
-		StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, enabled)
-	end)
+	pcall(function() game:GetService("StarterGui"):SetCoreGuiEnabled(Enum.CoreGuiType.All, enabled) end)
 end
 
 local impactFlash = { t = -1e9, a = 0 }
 local impactShake = { t = -1e9, amp = 0 }
 local function impactFlashValue()
 	local e = os.clock() - impactFlash.t
-	if e < 0 or e > 2.4 then
-		return 0
-	end
+	if e < 0 or e > 2.4 then return 0 end
 	return impactFlash.a * (1 - e / 2.4) ^ 1.5
 end
 local function impactShakeAmount()
 	local e = os.clock() - impactShake.t
-	if e < 0 or e > 3.5 then
-		return 0
-	end
+	if e < 0 or e > 3.5 then return 0 end
 	return impactShake.amp * (1 - e / 3.5) ^ 2
 end
 local function shakeCF(cf, amp, t, rotAmp)
-	if amp <= 0.001 then
-		return cf
-	end
+	if amp <= 0.001 then return cf end
 	local nx = math.noise(t * 23, 1.3, 0) * 2
 	local ny = math.noise(t * 27, 5.1, 0) * 2
 	local nz = math.noise(t * 19, 9.7, 0) * 2
@@ -1042,11 +927,7 @@ local wasShaking = false
 RunService.RenderStepped:Connect(function()
 	if state ~= "cinematic" then
 		local f = impactFlashValue()
-		if f > 0.003 then
-			setFlash(f)
-		elseif flash.BackgroundTransparency < 1 and flash.BackgroundColor3 == Color3.new(1, 1, 1) then
-			setFlash(0)
-		end
+		if f > 0.003 then setFlash(f) end
 		local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 		if hum then
 			local a = impactShakeAmount()
@@ -1063,51 +944,47 @@ RunService.RenderStepped:Connect(function()
 end)
 
 local function starFlare(part, size, color)
-	local bb = new("BillboardGui", {
-		Size = UDim2.fromOffset(size, size),
-		AlwaysOnTop = true,
-		LightInfluence = 0,
-		Adornee = part,
-		MaxDistance = 1e9,
-	}, part)
+	local bb = new("BillboardGui", { Size = UDim2.fromOffset(size, size), AlwaysOnTop = true, LightInfluence = 0, Adornee = part, MaxDistance = 1e9 }, part)
 	local function bar(len, thick, rot, tr)
-		local f = new("Frame", {
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = UDim2.fromScale(0.5, 0.5),
-			Size = UDim2.new(len, 0, 0, thick),
-			BackgroundColor3 = color,
-			BackgroundTransparency = tr,
-			BorderSizePixel = 0,
-			Rotation = rot,
-		}, bb)
+		local f = new("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.new(len, 0, 0, thick), BackgroundColor3 = color, BackgroundTransparency = tr, BorderSizePixel = 0, Rotation = rot }, bb)
 		new("UIGradient", { Transparency = NumberSequence.new({ NK(0, 1), NK(0.5, 0), NK(1, 1) }) }, f)
 	end
 	local function glow(s, tr)
-		local f = new("Frame", {
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = UDim2.fromScale(0.5, 0.5),
-			Size = UDim2.fromScale(s, s),
-			BackgroundColor3 = color,
-			BackgroundTransparency = tr,
-			BorderSizePixel = 0,
-		}, bb)
+		local f = new("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromScale(s, s), BackgroundColor3 = color, BackgroundTransparency = tr, BorderSizePixel = 0 }, bb)
 		new("UICorner", { CornerRadius = UDim.new(1, 0) }, f)
 	end
-	glow(0.55, 0.93)
-	glow(0.3, 0.82)
-	glow(0.14, 0.55)
-	glow(0.06, 0)
-	bar(1, 3, 0, 0.1)
-	bar(1, 3, 90, 0.1)
-	bar(0.5, 2, 45, 0.35)
-	bar(0.5, 2, -45, 0.35)
+	glow(0.55, 0.93) glow(0.3, 0.82) glow(0.14, 0.55) glow(0.06, 0)
+	bar(1, 3, 0, 0.1) bar(1, 3, 90, 0.1) bar(0.5, 2, 45, 0.35) bar(0.5, 2, -45, 0.35)
 	return bb
 end
 
 local function makeBeam(parent, a0, a1, width, color, transparency)
-	return new("Beam", {
-		Attachment0 = a0,
-		Attachment1 = a1,
-		Width0 = width,
-		Width1 = width,
-	
+	return new("Beam", { Attachment0 = a0, Attachment1 = a1, Width0 = width, Width1 = width, Color = ColorSequence.new(color), LightEmission = 1, LightInfluence = 0, Transparency = NumberSequence.new(transparency), FaceCamera = true, Segments = 1, Texture = "" }, parent)
+end
+
+local function makeLaser(folder, startPos, widths)
+	local p0 = vpart({ Transparency = 1, Size = Vector3.one, Position = startPos }, folder)
+	local p1 = vpart({ Transparency = 1, Size = Vector3.one, Position = startPos }, folder)
+	local at0 = new("Attachment", {}, p0)
+	local at1 = new("Attachment", {}, p1)
+	local layers = {
+		{ w = widths[1], col = Color3.fromRGB(255, 30, 30), tr = 0.55 },
+		{ w = widths[2], col = Color3.fromRGB(255, 70, 45), tr = 0.1 },
+		{ w = widths[3], col = Color3.fromRGB(255, 255, 255), tr = 0 },
+	}
+	local beams = {}
+	for _, L in ipairs(layers) do
+		beams[#beams + 1] = { beam = makeBeam(p0, at0, at1, 0, L.col, L.tr), w = L.w }
+	end
+	local laser = { p0 = p0, p1 = p1 }
+	function laser.setEnd(pos) p1.Position = pos end
+	function laser.setWidth(k)
+		for _, b in ipairs(beams) do b.beam.Width0 = b.w * k b.beam.Width1 = b.w * k end
+	end
+	function laser.destroy() p0:Destroy() p1:Destroy() end
+	return laser
+end
+
+local function makeMarker(radius)
+	local f = new("Folder", { Name = "Marker" }, fxFolder)
+	local outer = vpart({ Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.4, radius * 2, radius * 2), Material = Enum.Material.Neon, Color = Color3.fromRGB(255, 40, 40), Transparenc
