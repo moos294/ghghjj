@@ -4,6 +4,8 @@ local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
 local Workspace = game:GetService("Workspace")
 local Debris = game:GetService("Debris")
+local SoundService = game:GetService("SoundService")
+local StarterGui = game:GetService("StarterGui")
 local player = Players.LocalPlayer
 local camera = Workspace.CurrentCamera
 local mouse = player:GetMouse()
@@ -64,18 +66,16 @@ end
 local success, WindUI = pcall(function()
     return loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/download/1.6.66/main.lua"))()
 end)
-
 if not success or not WindUI then
     game:GetService("StarterGui"):SetCore("SendNotification", {Title = "UI加载失败", Text = "请检查网络或执行器权限", Duration = 10})
     return
 end
 
 local Window = WindUI:CreateWindow({
-    Title = "综合挂机面板 V3.6", Icon = "zap", Author = "Assistant",
-    Folder = "DualEgg_V36", Theme = "Dark", Transparent = true, Resizable = false,
+    Title = "综合挂机面板 V3.7", Icon = "zap", Author = "Assistant",
+    Folder = "DualEgg_V37", Theme = "Dark", Transparent = true, Resizable = false,
     Size = UDim2.fromOffset(460, 760),
 })
-
 local MainTab = Window:Tab({ Title = "控制面板", Icon = "settings" })
 local FunTab = Window:Tab({ Title = "娱乐区", Icon = "sparkles" })
 
@@ -112,8 +112,8 @@ InfiniteSection:Input({ Title = "基础目标力量", Value = "10000", Callback 
 local InfiniteStatus = InfiniteSection:Paragraph({ Title = "无限循环状态", Desc = "待机中..." })
 
 local DeleteSection = MainTab:Section({ Title = "🗑️ 自动删除指定宠物", Icon = "trash" })
-DeleteSection:Toggle({ Title = "开启自动删除", Desc = "自动删除列表中指定名字的宠物", Value = false, Callback = function(state) Cfg.AutoDelete = state end })
-DeleteSection:Input({ Title = "要删除的宠物名字", Desc = "多个名字用英文逗号隔开", Value = "Flying Wreath, Shining Star, Crystalline Globe", Callback = function(text) Cfg.DeletePetNames = text end })
+DeleteSection:Toggle({ Title = "开启自动删除", Value = false, Callback = function(state) Cfg.AutoDelete = state end })
+DeleteSection:Input({ Title = "要删除的宠物名字", Value = "Flying Wreath, Shining Star, Crystalline Globe", Callback = function(text) Cfg.DeletePetNames = text end })
 DeleteSection:Button({ Title = "🚨 立即执行一次删除", Color = Color3.fromRGB(200, 80, 80), Callback = function()
     task.spawn(function()
         pcall(function()
@@ -134,10 +134,11 @@ DeleteSection:Button({ Title = "🚨 立即执行一次删除", Color = Color3.f
                     end
                 end
             end
-            if deletedCount > 0 then delEvent:FireServer("Pet", uids) WindUI:Notify({ Title = "✅ 删除请求已发送", Content = "共 " .. deletedCount .. " 只", Duration = 3 }) end
+            if deletedCount > 0 then delEvent:FireServer("Pet", uids) WindUI:Notify({ Title = "✅ 请求已发送", Content = "共 " .. deletedCount .. " 只宠物", Duration = 3 }) end
         end)
     end)
 end })
+local DeleteStatus = DeleteSection:Paragraph({ Title = "删除状态", Desc = "待机中..." })
 
 task.spawn(function()
     local storeEvent pcall(function() storeEvent = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("StoreEvent") end)
@@ -146,7 +147,6 @@ task.spawn(function()
         if Cfg.AutoPetEgg and storeEvent then pcall(function() storeEvent:FireServer("Egg", Cfg.PetEggQty, Cfg.EggCurrency, Cfg.PetEggName) PetStatus:SetDesc("正在开: " .. Cfg.PetEggName) end) else PetStatus:SetDesc("待机中") end
     end
 end)
-
 task.spawn(function()
     local storeEvent pcall(function() storeEvent = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("StoreEvent") end)
     while true do
@@ -154,7 +154,6 @@ task.spawn(function()
         if Cfg.AutoHaloEgg and storeEvent then pcall(function() storeEvent:FireServer("Egg", Cfg.HaloEggQty, Cfg.EggCurrency, Cfg.HaloEggName) HaloStatus:SetDesc("正在开: " .. Cfg.HaloEggName) end) else HaloStatus:SetDesc("待机中") end
     end
 end)
-
 task.spawn(function()
     local trainEvent pcall(function() trainEvent = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("TrainEvent") end)
     while true do
@@ -162,7 +161,6 @@ task.spawn(function()
         if Cfg.AutoTrain and trainEvent then pcall(function() trainEvent:FireServer(Cfg.TrainAction) TrainStatus:SetDesc("正在锻炼: " .. Cfg.TrainActionCN) end) else TrainStatus:SetDesc("待机中") end
     end
 end)
-
 task.spawn(function()
     local rebirthEvent pcall(function() rebirthEvent = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("RebirthEvent") end)
     while true do
@@ -178,7 +176,6 @@ task.spawn(function()
         end
     end
 end)
-
 task.spawn(function()
     local rebirthEvent pcall(function() rebirthEvent = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("RebirthEvent") end)
     while true do
@@ -195,14 +192,13 @@ local DANGER_RADIUS = 480
 local CRATER_RADIUS = 480
 local CRATER_DEPTH = 185
 local RIM_WIDTH = 190
-local RIM_HEIGHT = 96
 local SPACE_ORIGIN = Vector3.new(0, 300000, 0)
 local EARTH_RADIUS = 80
-local GALAXY_RADIUS = 34000
-local SUN_RADIUS = 1400
 local T = { lockEnd = 2, ascentEnd = 6, orbitEnd = 9.5, pullEnd = 12.5, holdEnd = 13.5, swoopEnd = 17, fireT = 21.5, groundT = 23.4, imp = 25, endT = 32 }
+local NK = NumberSequenceKeypoint.new
 local FLAT = CFrame.Angles(0, 0, math.rad(90))
 local RED = Color3.fromRGB(255, 56, 56)
+
 local function new(class, props, parent) local inst = Instance.new(class) for k, v in pairs(props) do inst[k] = v end if parent then inst.Parent = parent end return inst end
 local function vpart(props, parent) local p = new("Part", { Anchored = true, CanCollide = false, CanQuery = false, CanTouch = false, CastShadow = false, Material = Enum.Material.SmoothPlastic, TopSurface = Enum.SurfaceType.Smooth, BottomSurface = Enum.SurfaceType.Smooth }, nil) for k, v in pairs(props) do p[k] = v end p.Parent = parent return p end
 local function bigSphere(parent, pos, diameter, color, material, transparency) local p if diameter <= 2048 then p = vpart({ Shape = Enum.PartType.Ball, Size = Vector3.one * diameter, Position = pos, Color = color, Material = material, Transparency = transparency }, parent) else p = vpart({ Size = Vector3.one * 2048, Position = pos, Color = color, Material = material, Transparency = transparency }, parent) new("SpecialMesh", { MeshType = Enum.MeshType.Sphere, Scale = Vector3.one * (diameter / 2048) }, p) end return p end
@@ -213,7 +209,7 @@ local function randDir() local z = math.random() * 2 - 1 local a = math.random()
 local fxFolder = new("Folder", { Name = "SpaceCannonFX" }, Workspace)
 
 local isTargeting, targetPos, targetMarker = false, nil, nil
-local FunSection = FunTab:Section({ Title = "末日轨道炮 (影院级)", Icon = "crosshair" })
+local FunSection = FunTab:Section({ Title = "末日影院轨道炮", Icon = "crosshair" })
 local FunStatus = FunSection:Paragraph({ Title = "状态", Desc = "请选择发射目标" })
 FunSection:Button({ Title = "🎯 选择发射目标", Callback = function() isTargeting = true FunStatus:SetDesc("请在游戏画面中点击地面...") end })
 FunSection:Button({ Title = "🎬 影院模式发射", Callback = function() if not targetPos then FunStatus:SetDesc("请先选择目标！") return end isTargeting = false if targetMarker then targetMarker:Destroy() end runSequence(targetPos) end })
@@ -236,27 +232,84 @@ mouse.Button1Down:Connect(function()
     end
 end)
 
-local function doImpact(center)
-    local R, D = CRATER_RADIUS, CRATER_DEPTH
-    local folder = new("Folder", { Name = "Crater" }, Workspace)
-    pcall(function()
-        local terrain = Workspace.Terrain
-        terrain:FillBall(center, R, Enum.Material.Air)
-        terrain:FillBall(center - Vector3.new(0, D * 0.5, 0), R * 0.7, Enum.Material.Air)
-        terrain:FillBall(center - Vector3.new(0, D * 0.85, 0), R * 0.35, Enum.Material.CrackedLava)
-    end)
-    local lava = bigSphere(folder, center - Vector3.new(0, D * 0.85, 0), R * 0.9, Color3.fromRGB(255, 40, 0), Enum.Material.Neon, 0.2)
-    new("PointLight", { Color = Color3.fromRGB(255, 80, 20), Range = 150, Brightness = 8 }, lava)
-    for i = 1, 100 do
-        task.spawn(function()
-            task.wait(math.random(0, 15) / 10)
-            local ang = math.random() * math.pi * 2
-            local dist = R * (0.6 + math.random() * 0.4)
-            local rock = new("Part", { Size = Vector3.one * math.random(10, 40), Position = center + Vector3.new(math.cos(ang)*dist, 10, math.sin(ang)*dist), Anchored = false, CanCollide = true, Material = Enum.Material.Slate, Color = Color3.fromRGB(30, 30, 30) }, Workspace)
-            rock.AssemblyLinearVelocity = Vector3.new(math.random(-100, 100), math.random(100, 250), math.random(-100, 100))
-            Debris:AddItem(rock, 15)
-        end)
+local function carveGroundPart(ground, center, folder)
+    local cf, size = ground.CFrame, ground.Size
+    local half = size / 2
+    local lc = cf:PointToObjectSpace(center)
+    local R, D, rimW, rimH = CRATER_RADIUS, CRATER_DEPTH, RIM_WIDTH, 96
+    local meshOuter = R + rimW + 24
+    local reach = meshOuter + 72
+    local x0 = math.clamp(lc.X - reach, -half.X, half.X)
+    local x1 = math.clamp(lc.X + reach, -half.X, half.X)
+    local z0 = math.clamp(lc.Z - reach, -half.Z, half.Z)
+    local z1 = math.clamp(lc.Z + reach, -half.Z, half.Z)
+    local baseBottom = math.min(-half.Y, -D - 42)
+    
+    local function surfaceAt(r, ang)
+        local n = math.noise(math.cos(ang) * 2.25, math.sin(ang) * 2.25, 5.6)
+        local localR = R * (1 + n * 0.035)
+        if r < localR then
+            local k = math.clamp(r / localR, 0, 1)
+            return -D * (math.max(0, 1 - k * k) ^ 1.35)
+        elseif r < localR + rimW then
+            local t = math.clamp((r - localR) / rimW, 0, 1)
+            return rimH * math.sin(math.pi * t) ^ 0.86 * (0.9 + n * 0.16)
+        end
+        return 0
     end
+
+    local rings = {}
+    local floorR = R * 0.18
+    rings[#rings + 1] = floorR
+    for i = 1, 8 do rings[#rings + 1] = floorR + (R - floorR) * i / 8 end
+    for i = 1, 3 do rings[#rings + 1] = R + rimW * i / 3 end
+    rings[#rings + 1] = meshOuter
+
+    local segments = 44
+    for ring = 1, #rings - 1 do
+        local r0, r1 = rings[ring], rings[ring + 1]
+        for i = 1, segments do
+            local ang = ((i - 0.5) / segments) * math.pi * 2
+            local midR = (r0 + r1) * 0.5
+            local innerY = surfaceAt(r0, ang)
+            local outerY = surfaceAt(r1, ang)
+            local lo, hi = math.min(innerY, outerY), math.max(innerY, outerY)
+            local depth = half.Y + lo - baseBottom
+            if depth > 0.2 then
+                local tangentialWidth = math.max(7, 2 * r1 * math.sin(math.pi / segments) * 1.075)
+                local radialX = lc.X + math.cos(ang) * midR
+                local radialZ = lc.Z + math.sin(ang) * midR
+                vpart({ Size = Vector3.new(r1 - r0 + 2, depth, tangentialWidth), CFrame = cf * CFrame.new(radialX, (baseBottom + half.Y + lo) * 0.5, radialZ) * CFrame.Angles(0, -ang, 0), Color = Color3.fromRGB(30, 25, 24), Material = Enum.Material.Basalt }, folder)
+            end
+        end
+    end
+    return function(wx, wz)
+        local lp = cf:PointToObjectSpace(Vector3.new(wx, center.Y, wz))
+        local dx, dz = lp.X - lc.X, lp.Z - lc.Z
+        local r = math.sqrt(dx * dx + dz * dz)
+        local a = math.atan2(dz, dx)
+        return cf:PointToWorldSpace(Vector3.new(lp.X, half.Y + surfaceAt(r, a), lp.Z)).Y
+    end
+end
+
+local function doImpact(center)
+    local folder = new("Folder", { Name = "Crater" }, Workspace)
+    local groundInst = nil
+    local params = RaycastParams.new()
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    params.FilterDescendantsInstances = {player.Character, fxFolder}
+    local r = Workspace:Raycast(center + Vector3.new(0, 10, 0), Vector3.new(0, -100, 0), params)
+    if r then groundInst = r.Instance end
+
+    local surfaceY
+    if groundInst and groundInst:IsA("BasePart") then
+        surfaceY = carveGroundPart(groundInst, center, folder)
+        groundInst.Transparency = 1
+        groundInst.CanCollide = false
+    end
+    
+    local lava = bigSphere(folder, center - Vector3.new(0, 100, 0), CRATER_RADIUS * 0.9, Color3.fromRGB(255, 40, 0), Enum.Material.Neon, 0.2)
+    new("PointLight", { Color = Color3.fromRGB(255, 80, 20), Range = 150, Brightness = 8 }, lava)
 end
 
 local function buildCannon(folder, cf)
@@ -298,7 +351,7 @@ function runSequence(target)
     buildCannon(stage, cannonCF)
     buildPlanet(stage, EC, EARTH_RADIUS, Color3.fromRGB(20, 80, 160))
     local sunPos = EC + Vector3.new(3600, 0, 0)
-    local sun = buildPlanet(stage, sunPos, SUN_RADIUS, Color3.fromRGB(255, 180, 0))
+    local sun = buildPlanet(stage, sunPos, 1400, Color3.fromRGB(255, 180, 0))
     new("PointLight", { Color = Color3.fromRGB(255, 220, 100), Range = 100000, Brightness = 5 }, sun)
     
     for i=1,3000 do vpart({ Size = Vector3.one * math.random(10,50), Position = GC + randDir() * 45000, Color = Color3.new(1,1,1), Material = Enum.Material.Neon }, stage) end
