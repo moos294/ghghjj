@@ -1,11 +1,4 @@
-local WindUI
-local success, err = pcall(function()
-    WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/download/1.6.66/main.lua"))()
-end)
-if not success or not WindUI then
-    game:GetService("StarterGui"):SetCore("SendNotification", {Title = "UI加载失败", Text = "网络错误或代码太长被拦截: " .. tostring(err), Duration = 10})
-    return
-end
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/download/1.6.66/main.lua"))()
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -38,8 +31,8 @@ local Cfg = {
     AutoRebirth = false, TargetStrength = 10000, RebirthInc = 10000, TargetRebirthCount = 5,
     InfiniteRebirth = false, BaseStrength = 10000,
     Fly = false, FlySpeed = 50, WalkSpeed = 16, AntiAfk = true, TotalReps = 0,
-    ScriptStartTime = tick(), RailgunKeyBind = true, RailgunCooldown = 1.2, RailgunCraterRadius = 300,
-    RailgunCraterDepth = 200, RailgunDebrisCount = 150, RailgunShakeIntensity = 20, RailgunShakeDuration = 4,
+    ScriptStartTime = tick(), RailgunKeyBind = true, RailgunCooldown = 1.2, RailgunCraterRadius = 350,
+    RailgunCraterDepth = 250, RailgunDebrisCount = 200, RailgunShakeIntensity = 25, RailgunShakeDuration = 5,
 }
 
 local C = { accent = Color3.fromRGB(60, 150, 230) }
@@ -53,6 +46,7 @@ local function getCurrentRebirths() local count = 0 pcall(function() local attr 
 local function applyAntiIdleKick() if not getconnections then return end pcall(function() for _, conn in next, getconnections(player.Idled) do pcall(function() conn:Disable() end) pcall(function() conn:Disconnect() end) end end) end
 local function applyAntiClientKick() if not getgc then return end pcall(function() for _, Value in next, getgc(true) do if typeof(Value) == "table" then if rawget(Value, "indexInstance") or rawget(Value, "newindexInstance") then Value.tvk = {"kick", function() return task.wait(9e9) end} end end end end) end
 local function applyBypassGroup() if not hookmetamethod then return end pcall(function() local clonerefFunc = cloneref or function(o) return o end local Speaker = clonerefFunc(Players).LocalPlayer local OldNameCall OldNameCall = hookmetamethod(game, "__namecall", function(self, ...) if self ~= Speaker or getnamecallmethod() ~= "IsInGroup" then return OldNameCall(self, ...) end return true end) hookfunction(Speaker.IsInGroup, function() return true end) end) end
+
 local function applyGrayBuildings() for _, obj in ipairs(workspace:GetDescendants()) do if obj:IsA("BasePart") then local isChar = false for _, plr in ipairs(Players:GetPlayers()) do if plr.Character and obj:IsDescendantOf(plr.Character) then isChar = true break end end if not isChar and not obj.Parent.Name:lower():find("pet") then obj.Material = Enum.Material.SmoothPlastic obj.Color = Color3.fromRGB(128, 128, 128) obj.Reflectance = 0 for _, child in ipairs(obj:GetChildren()) do if child:IsA("Texture") or child:IsA("Decal") or child:IsA("SurfaceAppearance") then child:Destroy() end end end end end end
 local function hidePets() for _, plr in ipairs(Players:GetPlayers()) do local char = plr.Character if char then for _, obj in ipairs(char:GetChildren()) do if obj:IsA("Model") and obj.Name:lower():find("pet") then for _, part in ipairs(obj:GetDescendants()) do if part:IsA("BasePart") then part.Transparency = 1 end end end end end end end
 local function boostPerformance() pcall(function() Lighting.GlobalShadows = false Lighting.FogEnd = 100000 Lighting.Brightness = 1 Lighting.EnvironmentDiffuseScale = 0 Lighting.EnvironmentSpecularScale = 0 Lighting.OutdoorAmbient = Color3.fromRGB(0, 0, 0) Lighting.ClockTime = 12 end) for _, v in ipairs(Lighting:GetChildren()) do if v:IsA("PostEffect") then v:Destroy() end end for _, v in ipairs(workspace:GetDescendants()) do if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") then v.Enabled = false end if v:IsA("Texture") or v:IsA("Decal") then v.Transparency = 1 end end pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end) end
@@ -66,7 +60,8 @@ local function newEffectPart(shape, material, color, transparency) local p = Ins
 
 local targetPosition, isTargeting, targetMarker = nil, false, nil
 local originalLighting = { Ambient = Lighting.Ambient, OutdoorAmbient = Lighting.OutdoorAmbient, Brightness = Lighting.Brightness, ClockTime = Lighting.ClockTime, FogColor = Lighting.FogColor, FogEnd = Lighting.FogEnd, FogStart = Lighting.FogStart }
-local savedSky, spaceModeActive = nil, false
+local savedSky = nil
+local spaceModeActive = false
 
 local function enterSpaceMode()
     spaceModeActive = true
@@ -112,32 +107,34 @@ local function createBeamSegment(startPos, endPos, width, color, transparency)
 end
 
 local function createLaserFromSky(targetPos)
-    local skyY = 1000
+    local skyY = 1200
     local segments = {}
     local prevPos = targetPos + Vector3.new(0, skyY, 0)
+    
     for i = 1, 60 do
         task.spawn(function()
             task.wait((i - 1) * 0.02)
             local currentY = skyY - (skyY / 60) * i
             local curPos = targetPos + Vector3.new(0, currentY, 0)
-            local segOuter = createBeamSegment(curPos, prevPos, 55, Color3.fromRGB(255, 10, 10), 0.2)
-            local segMid = createBeamSegment(curPos, prevPos, 30, Color3.fromRGB(255, 100, 0), 0.1)
-            local segInner = createBeamSegment(curPos, prevPos, 10, Color3.fromRGB(255, 255, 255), 0)
+            local segOuter = createBeamSegment(curPos, prevPos, 65, Color3.fromRGB(255, 20, 20), 0.2)
+            local segMid = createBeamSegment(curPos, prevPos, 35, Color3.fromRGB(255, 150, 50), 0.1)
+            local segInner = createBeamSegment(curPos, prevPos, 15, Color3.fromRGB(255, 255, 255), 0)
             if segOuter then table.insert(segments, segOuter) end
             if segMid then table.insert(segments, segMid) end
             if segInner then table.insert(segments, segInner) end
             prevPos = curPos
         end)
     end
+    
     for i = 1, 300 do
         task.spawn(function()
             task.wait(math.random(0, 10) / 10)
             local angle = math.random() * math.pi * 2 local dist = math.random(0, 200)
-            local drop = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(255, 20, 20), 0)
-            drop.Size = Vector3.new(math.random(4, 12), math.random(4, 12), math.random(4, 12))
+            local drop = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(255, 40, 20), 0)
+            drop.Size = Vector3.new(math.random(8, 20), math.random(8, 20), math.random(8, 20))
             drop.Position = targetPos + Vector3.new(math.cos(angle) * dist, 800, math.sin(angle) * dist)
             drop.Parent = workspace
-            TweenService:Create(drop, TweenInfo.new(1.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Position = targetPos + Vector3.new(math.cos(angle) * dist * 0.2, 0, math.sin(angle) * dist * 0.2), Size = Vector3.new(1, 1, 1), Transparency = 0.5 }):Play()
+            TweenService:Create(drop, TweenInfo.new(1.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Position = targetPos + Vector3.new(math.cos(angle) * dist * 0.2, 0, math.sin(angle) * dist * 0.2), Size = Vector3.new(2, 2, 2), Transparency = 0.5 }):Play()
             Debris:AddItem(drop, 1.5)
         end)
     end
@@ -148,39 +145,39 @@ local function createLaserFromSky(targetPos)
     end)
 end
 
+-- 用海量模型堆出一个巨大的、真实的下沉坑（绝不倒扣）
 local function spawnGiantCrater(hitPosition)
     local craterRadius = Cfg.RailgunCraterRadius
     local craterDepth = Cfg.RailgunCraterDepth
     local craterModel = Instance.new("Model") craterModel.Name = "GiantCrater" craterModel.Parent = workspace
-    for ring = 1, 8 do
-        local r = craterRadius * (ring / 8)
-        local yOffset = -craterDepth * (ring / 8)
-        local blockCount = math.floor(40 * (ring / 8)) + 10
+    
+    -- 坑底中心
+    local lavaCenter = hitPosition - Vector3.new(0, craterDepth, 0)
+    
+    -- 阶梯状环形挖坑模型（从上往下堆叠）
+    for ring = 1, 10 do
+        local r = craterRadius * (1 - (ring - 1) / 10)
+        local yOffset = -craterDepth * ((ring - 1) / 10)
+        local blockCount = math.floor(80 * ((10 - ring) / 10)) + 10
         for i = 1, blockCount do
             local angle = (i / blockCount) * math.pi * 2
             local x = math.cos(angle) * r
             local z = math.sin(angle) * r
-            local block = newEffectPart(Enum.PartType.Block, Enum.Material.Slate, Color3.fromRGB(30, 30, 30), 0)
-            block.Size = Vector3.new(craterRadius * 0.4, craterDepth * 0.15, craterRadius * 0.4)
-            block.Position = hitPosition + Vector3.new(x, yOffset, z)
-            block.CFrame = CFrame.new(block.Position) * CFrame.Angles(0, angle, 0)
-            block.Parent = craterModel
+            local wedge = newEffectPart(Enum.PartType.Wedge, Enum.Material.Slate, Color3.fromRGB(20, 20, 20), 0)
+            wedge.Size = Vector3.new(craterRadius * 0.35, craterDepth * 0.25, craterRadius * 0.35)
+            wedge.Position = hitPosition + Vector3.new(x, yOffset, z)
+            wedge.CFrame = CFrame.new(wedge.Position) * CFrame.Angles(0, angle, math.rad(-30))
+            wedge.Parent = craterModel
         end
     end
-    local lavaCenter = hitPosition - Vector3.new(0, craterDepth * 0.85, 0)
+
+    -- 底部岩浆海
     local lavaBase = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(255, 40, 0), 0)
-    lavaBase.Size = Vector3.new(5, craterRadius * 0.8, craterRadius * 0.8)
+    lavaBase.Size = Vector3.new(5, craterRadius * 0.3, craterRadius * 0.3)
     lavaBase.CFrame = CFrame.new(lavaCenter) * CFrame.Angles(0, 0, math.rad(90))
     lavaBase.Parent = craterModel
-    for i = 1, 150 do
-        local angle = math.random() * math.pi * 2
-        local r = math.random() * craterRadius * 0.8
-        local yOffset = -craterDepth * (r / craterRadius)
-        local crack = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(255, 20, 0), 0)
-        crack.Size = Vector3.new(math.random(4, 10), 15, math.random(20, 60))
-        crack.CFrame = CFrame.new(hitPosition + Vector3.new(math.cos(angle) * r, yOffset, math.sin(angle) * r)) * CFrame.Angles(0, angle + math.random(-0.9, 0.9), math.random(-0.5, 0.5))
-        crack.Parent = craterModel
-    end
+    
+    -- 飞溅碎石
     for i = 1, Cfg.RailgunDebrisCount do
         task.spawn(function()
             task.wait(math.random(0, 20) / 10)
@@ -189,7 +186,7 @@ local function spawnGiantCrater(hitPosition)
             rock.Color = Color3.fromRGB(math.random(30, 60), math.random(30, 60), math.random(30, 60))
             rock.Size = Vector3.new(w, math.random(20, 60) / 10, math.random(20, 60) / 10)
             rock.Anchored = false rock.CanCollide = true rock.CanQuery = false
-            local angle = math.random() * math.pi * 2 local dist = craterRadius * (0.4 + math.random() * 0.6)
+            local angle = math.random() * math.pi * 2 local dist = craterRadius * (0.2 + math.random() * 0.8)
             rock.Position = hitPosition + Vector3.new(math.cos(angle) * dist, math.random(10, 40), math.sin(angle) * dist)
             rock.CFrame = CFrame.new(rock.Position) * CFrame.Angles(math.random() * 6, math.random() * 6, math.random() * 6) rock.Parent = workspace
             rock.AssemblyLinearVelocity = Vector3.new(math.random(-80, 80), math.random(10, 40), math.random(-80, 80))
@@ -197,7 +194,7 @@ local function spawnGiantCrater(hitPosition)
             Debris:AddItem(rock, 90)
         end)
     end
-    Debris:AddItem(craterModel, 120)
+    Debris:AddItem(craterModel, 300)
 end
 
 local function screenShake(intensity, duration)
@@ -237,8 +234,9 @@ local function makeDetailedPlanet(pos, size, baseColor, type)
     local model = Instance.new("Model") model.Parent = spaceFolderRef
     local core = newEffectPart(Enum.PartType.Ball, Enum.Material.SmoothPlastic, baseColor, 0)
     core.Size = Vector3.new(size, size, size) core.Position = pos core.Parent = model
+    
     if type == "Earth" then
-        for i = 1, 150 do
+        for i = 1, 300 do
             local land = newEffectPart(Enum.PartType.Block, Enum.Material.SmoothPlastic, Color3.fromRGB(50, 120, 50), 0)
             local s = size * math.random(3, 8) / 100
             land.Size = Vector3.new(s, s, s)
@@ -248,20 +246,20 @@ local function makeDetailedPlanet(pos, size, baseColor, type)
             land.Parent = model
         end
     elseif type == "Jupiter" then
-        for i = 1, 20 do
+        for i = 1, 30 do
             local band = newEffectPart(Enum.PartType.Cylinder, Enum.Material.SmoothPlastic, Color3.fromRGB(math.random(150,200), math.random(120,160), math.random(80,120)), 0)
+            band.Size = Vector3.new(size / 100, size * 0.99, size * 0.99)
+            band.CFrame = CFrame.new(pos + Vector3.new(0, (i - 15) * (size / 30), 0)) * CFrame.Angles(0, 0, math.rad(90))
+            band.Parent = model
+        end
+    elseif type == "Saturn" then
+        for i = 1, 20 do
+            local band = newEffectPart(Enum.PartType.Cylinder, Enum.Material.SmoothPlastic, Color3.fromRGB(math.random(200,230), math.random(180,200), math.random(120,150)), 0)
             band.Size = Vector3.new(size / 100, size * 0.99, size * 0.99)
             band.CFrame = CFrame.new(pos + Vector3.new(0, (i - 10) * (size / 20), 0)) * CFrame.Angles(0, 0, math.rad(90))
             band.Parent = model
         end
-    elseif type == "Saturn" then
         for i = 1, 15 do
-            local band = newEffectPart(Enum.PartType.Cylinder, Enum.Material.SmoothPlastic, Color3.fromRGB(math.random(200,230), math.random(180,200), math.random(120,150)), 0)
-            band.Size = Vector3.new(size / 100, size * 0.99, size * 0.99)
-            band.CFrame = CFrame.new(pos + Vector3.new(0, (i - 7.5) * (size / 15), 0)) * CFrame.Angles(0, 0, math.rad(90))
-            band.Parent = model
-        end
-        for i = 1, 10 do
             local ringRadius = size * 1.3 + i * size * 0.05
             local ring = newEffectPart(Enum.PartType.Cylinder, Enum.Material.SmoothPlastic, Color3.fromRGB(200, 180, 150), 0.2)
             ring.Size = Vector3.new(size / 200, ringRadius, ringRadius)
@@ -273,7 +271,7 @@ local function makeDetailedPlanet(pos, size, baseColor, type)
 end
 
 local function createStarfield(origin)
-    for i = 1, 1000 do
+    for i = 1, 1500 do
         local angle = math.random() * math.pi * 2
         local phi = math.acos(2 * math.random() - 1)
         local dist = 6000 + math.random() * 2000
@@ -288,28 +286,27 @@ local function createSpaceEnvironment(origin)
     local folder = Instance.new("Folder") folder.Name = "CinematicSpace" folder.Parent = workspace
     spaceFolderRef = folder
     createStarfield(origin)
+    
     local sunPos = origin
     local sun = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(255, 100, 0), 0)
-    sun.Size = Vector3.new(800, 800, 800) sun.Position = sunPos sun.Parent = folder
+    sun.Size = Vector3.new(1000, 1000, 1000) sun.Position = sunPos sun.Parent = folder
     for i = 1, 10 do
         local corona = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(255, math.max(80 - i * 10, 20), 0), 0.85)
-        corona.Size = Vector3.new(820 + i * 120, 820 + i * 120, 820 + i * 120) corona.Position = sunPos corona.Parent = folder
+        corona.Size = Vector3.new(1020 + i * 150, 1020 + i * 150, 1020 + i * 150) corona.Position = sunPos corona.Parent = folder
     end
-    for i = 1, 30 do
-        local flare = newEffectPart(Enum.PartType.Block, Enum.Material.Neon, Color3.fromRGB(255, 50, 0), 0.3)
-        flare.Size = Vector3.new(math.random(200, 500), 20, 40)
-        flare.CFrame = CFrame.new(sunPos) * CFrame.Angles(math.random()*6, math.random()*6, math.random()*6)
-        flare.Parent = folder
-    end
-    local earthPos = origin + Vector3.new(4000, 0, 2000)
-    local earth, earthCore = makeDetailedPlanet(earthPos, 300, Color3.fromRGB(20, 80, 160), "Earth")
+    
+    local earthPos = origin + Vector3.new(5000, 0, 3000)
+    local earth, earthCore = makeDetailedPlanet(earthPos, 400, Color3.fromRGB(20, 80, 160), "Earth")
     table.insert(spaceAnim, {model = earth, basePos = earthPos, rotSpeed = Vector3.new(0, 0.1, 0), floatSpeed = 0.15, floatAmp = 20, startTime = tick(), rot = 0, isPlanet = true, core = earthCore})
-    local jupiterPos = origin + Vector3.new(-6000, 1000, 5000)
-    local jupiter, jupCore = makeDetailedPlanet(jupiterPos, 700, Color3.fromRGB(200, 160, 120), "Jupiter")
+    
+    local jupiterPos = origin + Vector3.new(-8000, 1500, 6000)
+    local jupiter, jupCore = makeDetailedPlanet(jupiterPos, 800, Color3.fromRGB(200, 160, 120), "Jupiter")
     table.insert(spaceAnim, {model = jupiter, basePos = jupiterPos, rotSpeed = Vector3.new(0, 0.05, 0), floatSpeed = 0.1, floatAmp = 30, startTime = tick(), rot = 0, isPlanet = true, core = jupCore})
-    local saturnPos = origin + Vector3.new(-10000, -800, -8000)
-    local saturn, satCore = makeDetailedPlanet(saturnPos, 600, Color3.fromRGB(220, 200, 150), "Saturn")
+    
+    local saturnPos = origin + Vector3.new(-12000, -1000, -10000)
+    local saturn, satCore = makeDetailedPlanet(saturnPos, 700, Color3.fromRGB(220, 200, 150), "Saturn")
     table.insert(spaceAnim, {model = saturn, basePos = saturnPos, rotSpeed = Vector3.new(0, 0.05, 0), floatSpeed = 0.1, floatAmp = 30, startTime = tick(), rot = 0, isPlanet = true, core = satCore})
+    
     return folder, earthPos, sunPos
 end
 
@@ -332,25 +329,44 @@ end
 
 local function createSpaceStationRailgun(earthPos)
     local folder = Instance.new("Folder") folder.Name = "SpaceStationRailgun" folder.Parent = workspace
-    local gunBase = earthPos + Vector3.new(0, 1600, 0)
-    local core = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Metal, Color3.fromRGB(80, 80, 90), 0)
-    core.Size = Vector3.new(350, 50, 50) core.CFrame = CFrame.new(gunBase) * CFrame.Angles(0, 0, math.rad(90)) core.Parent = folder
-    for i = 1, 20 do
-        local strut = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Metal, Color3.fromRGB(100, 100, 110), 0)
-        strut.Size = Vector3.new(370, 5, 5) 
-        strut.CFrame = CFrame.new(gunBase + Vector3.new(0, math.cos(i)*25, math.sin(i)*25)) * CFrame.Angles(0, 0, math.rad(90))
+    local gunBase = earthPos + Vector3.new(0, 1800, 0)
+    
+    -- 巨型星际战舰级空间站主体
+    local core = newEffectPart(Enum.PartType.Block, Enum.Material.SmoothPlastic, Color3.fromRGB(60, 65, 75), 0)
+    core.Size = Vector3.new(600, 100, 150) core.CFrame = CFrame.new(gunBase) core.Parent = folder
+    
+    -- 密集桁架
+    for i = 1, 30 do
+        local strut = newEffectPart(Enum.PartType.Block, Enum.Material.SmoothPlastic, Color3.fromRGB(90, 95, 105), 0)
+        strut.Size = Vector3.new(10, 10, 400) 
+        strut.CFrame = CFrame.new(gunBase + Vector3.new(-250 + i*15, 0, 0))
         strut.Parent = folder
     end
+    
+    -- 散热片
+    for i = 1, 10 do
+        local fin = newEffectPart(Enum.PartType.Block, Enum.Material.SmoothPlastic, Color3.fromRGB(120, 120, 130), 0)
+        fin.Size = Vector3.new(15, 150, 300)
+        fin.CFrame = CFrame.new(gunBase + Vector3.new(-200 + i*40, 0, 0)) * CFrame.Angles(math.rad(15), 0, 0)
+        fin.Parent = folder
+    end
+
+    -- 红色能量环
     for i = 1, 8 do
         local ring = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Neon, Color3.fromRGB(255, 20, 20), 0)
-        ring.Size = Vector3.new(8, 55, 55) ring.CFrame = CFrame.new(gunBase + Vector3.new(-120 + i * 35, 0, 0)) * CFrame.Angles(0, 0, math.rad(90)) ring.Parent = folder
+        ring.Size = Vector3.new(15, 70, 70) ring.CFrame = CFrame.new(gunBase + Vector3.new(-150 + i * 40, -100, 0)) * CFrame.Angles(0, 0, math.rad(90)) ring.Parent = folder
     end
-    local barrel = newEffectPart(Enum.PartType.Cylinder, Enum.Material.Metal, Color3.fromRGB(50, 50, 60), 0)
-    barrel.Size = Vector3.new(450, 40, 40) barrel.CFrame = CFrame.new(gunBase + Vector3.new(0, -240, 0)) * CFrame.Angles(0, 0, math.rad(90)) barrel.Parent = folder
-    local muzzle = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(255, 0, 0), 0)
-    muzzle.Size = Vector3.new(50, 50, 50) muzzle.Position = gunBase + Vector3.new(0, -460, 0) muzzle.Parent = folder
-    local charge = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(255, 100, 100), 0)
-    charge.Size = Vector3.new(20, 20, 20) charge.Position = muzzle.Position charge.Parent = folder
+
+    -- 超级主炮管
+    local barrel = newEffectPart(Enum.PartType.Cylinder, Enum.Material.SmoothPlastic, Color3.fromRGB(40, 45, 55), 0)
+    barrel.Size = Vector3.new(600, 80, 80) barrel.CFrame = CFrame.new(gunBase + Vector3.new(0, -250, 0)) * CFrame.Angles(0, 0, math.rad(90)) barrel.Parent = folder
+    
+    -- 炮口发光核心
+    local muzzle = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(255, 100, 100), 0)
+    muzzle.Size = Vector3.new(100, 100, 100) muzzle.Position = gunBase + Vector3.new(0, -550, 0) muzzle.Parent = folder
+
+    local charge = newEffectPart(Enum.PartType.Ball, Enum.Material.Neon, Color3.fromRGB(255, 0, 0), 0)
+    charge.Size = Vector3.new(40, 40, 40) charge.Position = muzzle.Position charge.Parent = folder
     return folder, charge, muzzle.Position
 end
 
@@ -359,7 +375,18 @@ local function createLetterbox()
     pcall(function() gui.Parent = game:GetService("CoreGui") end) if not gui.Parent then gui.Parent = player.PlayerGui end
     local topBar = Instance.new("Frame") topBar.AnchorPoint = Vector2.new(0, 0) topBar.Size = UDim2.new(1, 0, 0, 0) topBar.Position = UDim2.new(0, 0, 0, 0) topBar.BackgroundColor3 = Color3.new(0, 0, 0) topBar.BorderSizePixel = 0 topBar.Parent = gui
     local bottomBar = Instance.new("Frame") bottomBar.AnchorPoint = Vector2.new(0, 1) bottomBar.Size = UDim2.new(1, 0, 0, 0) bottomBar.Position = UDim2.new(0, 0, 1, 0) bottomBar.BackgroundColor3 = Color3.new(0, 0, 0) bottomBar.BorderSizePixel = 0 bottomBar.Parent = gui
-    return gui, topBar, bottomBar
+    
+    local subtitle = Instance.new("TextLabel")
+    subtitle.Name = "Subtitle"
+    subtitle.Size = UDim2.new(1, 0, 0, 30)
+    subtitle.Position = UDim2.new(0, 0, 1, -50)
+    subtitle.BackgroundTransparency = 1
+    subtitle.TextColor3 = Color3.fromRGB(200, 200, 200)
+    subtitle.Font = Enum.Font.GothamBold
+    subtitle.TextSize = 16
+    subtitle.Text = ""
+    subtitle.Parent = gui
+    return gui, topBar, bottomBar, subtitle
 end
 
 local function playCinematic(targetPos)
@@ -367,7 +394,7 @@ local function playCinematic(targetPos)
     local blackoutGui = Instance.new("ScreenGui") blackoutGui.Name = "CinematicBlackout" blackoutGui.ResetOnSpawn = false blackoutGui.IgnoreGuiInset = true blackoutGui.DisplayOrder = 999
     pcall(function() blackoutGui.Parent = game:GetService("CoreGui") end) if not blackoutGui.Parent then blackoutGui.Parent = player.PlayerGui end
     local blackFrame = Instance.new("Frame") blackFrame.Size = UDim2.new(1, 0, 1, 0) blackFrame.BackgroundColor3 = Color3.new(0, 0, 0) blackFrame.BackgroundTransparency = 1 blackFrame.BorderSizePixel = 0 blackFrame.Parent = blackoutGui
-    local letterboxGui, topBar, bottomBar = createLetterbox()
+    local letterboxGui, topBar, bottomBar, subtitle = createLetterbox()
     TweenService:Create(topBar, TweenInfo.new(0.6), { Size = UDim2.new(1, 0, 0, 60) }):Play() TweenService:Create(bottomBar, TweenInfo.new(0.6), { Size = UDim2.new(1, 0, 0, 60) }):Play()
     
     local camLock = RunService.RenderStepped:Connect(function() camera.CameraType = Enum.CameraType.Scriptable end)
@@ -395,20 +422,27 @@ local function playCinematic(targetPos)
         local startT = tick() while tick() - startT < dur do camera.CFrame = startCF:Lerp(endCF, (tick() - startT) / dur) RunService.RenderStepped:Wait() end
     end
     
+    subtitle.Text = "MILKY WAY · 银河系"
     cameraMoveTo(camera.CFrame, CFrame.new(sunPos + Vector3.new(-1200, 400, 2500), sunPos), 2) task.wait(2)
+    subtitle.Text = "EARTH ORBIT · 近地轨道"
     cameraMoveTo(camera.CFrame, CFrame.new(earthPos + Vector3.new(1000, 600, 1500), earthPos), 2) task.wait(2)
     
+    subtitle.Text = "CHARGING · 充能中 30%"
     local closeUpCF = CFrame.new(muzzlePos + Vector3.new(0, 150, 450), muzzlePos)
     cameraMoveTo(camera.CFrame, closeUpCF, 2) task.wait(2)
     
     task.spawn(function()
         local dur = 4 local startT = tick()
         while tick() - startT < dur do
-            local a = (tick() - startT) / dur local s = 20 + a * 150
+            local a = (tick() - startT) / dur local s = 40 + a * 100
             chargeOrb.Size = Vector3.new(s, s, s) chargeOrb.Color = Color3.fromRGB(255, 0, 0) RunService.RenderStepped:Wait()
         end
     end)
-    task.wait(4)
+    
+    subtitle.Text = "CHARGING · 充能中 90%"
+    task.wait(2)
+    subtitle.Text = "FIRING · 发射！"
+    task.wait(2)
     
     local flash = Instance.new("Frame") flash.Size = UDim2.new(1, 0, 1, 0) flash.BackgroundColor3 = Color3.new(1, 1, 1) flash.BackgroundTransparency = 0 flash.BorderSizePixel = 0 flash.Parent = blackoutGui
     TweenService:Create(flash, TweenInfo.new(0.4), { BackgroundTransparency = 1 }):Play() Debris:AddItem(flash, 0.6)
@@ -424,14 +458,16 @@ local function playCinematic(targetPos)
     exitSpaceMode() camera.CameraType = oldCameraType if oldSubject then camera.CameraSubject = oldSubject end
     
     TweenService:Create(blackFrame, TweenInfo.new(0.6), { BackgroundTransparency = 1 }):Play() task.wait(0.4)
+    subtitle.Text = "IMPACT · 命中"
     createLaserFromSky(targetPos) setDoomsdaySky(true) screenShake(Cfg.RailgunShakeIntensity * 2, 2)
     task.wait(3) spawnGiantCrater(targetPos) task.wait(30) setDoomsdaySky(false)
     
     TweenService:Create(topBar, TweenInfo.new(0.6), { Size = UDim2.new(1, 0, 0, 0) }):Play() TweenService:Create(bottomBar, TweenInfo.new(0.6), { Size = UDim2.new(1, 0, 0, 0) }):Play()
+    subtitle.Text = ""
     task.wait(0.6) blackFrame:Destroy() blackoutGui:Destroy() letterboxGui:Destroy()
 end
 
-local Window = WindUI:CreateWindow({ Title = "力量之冠封存全能版 9.1", Icon = "zap", Author = "力量之冠", Folder = "PowerCrownSave", Theme = "Dark", Transparent = true, Resizable = false, Size = UDim2.fromOffset(460, 780) })
+local Window = WindUI:CreateWindow({ Title = "力量之冠封存全能版 3.5", Icon = "zap", Author = "力量之冠", Folder = "PowerCrownSave", Theme = "Dark", Transparent = true, Resizable = false, Size = UDim2.fromOffset(460, 780) })
 
 local MainTab = Window:Tab({ Title = "控制面板", Icon = "settings" })
 local CommonSection = MainTab:Section({ Title = "公共设置", Icon = "settings" })
@@ -490,12 +526,12 @@ local RailgunSection = FunTab:Section({ Title = "末日轨道炮", Icon = "zap" 
 local RailgunStatus = RailgunSection:Paragraph({ Title = "轨道炮状态", Desc = "请先点击「选择发射目标」选择地点" })
 RailgunSection:Button({ Title = "选择发射目标", Callback = function() isTargeting = true RailgunStatus:SetDesc("请在游戏画面中点击地面选择目标...") end })
 RailgunSection:Button({ Title = "立即发射", Callback = function() if not targetPosition then RailgunStatus:SetDesc("请先点击「选择发射目标」选择地点！") return end executeRailgunStrike(targetPosition) RailgunStatus:SetDesc("末日轨道炮已发射！") end })
-RailgunSection:Button({ Title = "🎬 影院模式发射 9.1", Callback = function() if not targetPosition then RailgunStatus:SetDesc("请先点击「选择发射目标」选择地点！") return end RailgunStatus:SetDesc("影院模式播放中...") task.spawn(function() playCinematic(targetPosition) RailgunStatus:SetDesc("影院模式完成！") end) end })
+RailgunSection:Button({ Title = "🎬 影院模式发射 3.5", Callback = function() if not targetPosition then RailgunStatus:SetDesc("请先点击「选择发射目标」选择地点！") return end RailgunStatus:SetDesc("影院模式播放中...") task.spawn(function() playCinematic(targetPosition) RailgunStatus:SetDesc("影院模式完成！") end) end })
 RailgunSection:Toggle({ Title = "启用 F 键发射", Value = true, Callback = function(state) Cfg.RailgunKeyBind = state end })
-RailgunSection:Slider({ Title = "坑洞半径", Value = { Min = 30, Max = 1500, Default = 300 }, Step = 10, Callback = function(value) Cfg.RailgunCraterRadius = value end })
-RailgunSection:Slider({ Title = "坑洞深度", Value = { Min = 20, Max = 800, Default = 200 }, Step = 10, Callback = function(value) Cfg.RailgunCraterDepth = value end })
-RailgunSection:Slider({ Title = "碎石数量", Value = { Min = 0, Max = 500, Default = 150 }, Step = 10, Callback = function(value) Cfg.RailgunDebrisCount = value end })
-RailgunSection:Slider({ Title = "屏幕震动强度", Value = { Min = 0, Max = 50, Default = 20 }, Step = 1, Callback = function(value) Cfg.RailgunShakeIntensity = value end })
+RailgunSection:Slider({ Title = "坑洞半径", Value = { Min = 30, Max = 1500, Default = 350 }, Step = 10, Callback = function(value) Cfg.RailgunCraterRadius = value end })
+RailgunSection:Slider({ Title = "坑洞深度", Value = { Min = 20, Max = 800, Default = 250 }, Step = 10, Callback = function(value) Cfg.RailgunCraterDepth = value end })
+RailgunSection:Slider({ Title = "碎石数量", Value = { Min = 0, Max = 500, Default = 200 }, Step = 10, Callback = function(value) Cfg.RailgunDebrisCount = value end })
+RailgunSection:Slider({ Title = "屏幕震动强度", Value = { Min = 0, Max = 50, Default = 25 }, Step = 1, Callback = function(value) Cfg.RailgunShakeIntensity = value end })
 
 local TeleportTab = Window:Tab({ Title = "传送", Icon = "send" })
 local TPSection = TeleportTab:Section({ Title = "传送玩家", Icon = "user" })
@@ -518,7 +554,7 @@ local SG = Instance.new("ScreenGui") SG.Name = "PowerCrownUI" SG.ResetOnSpawn = 
 pcall(function() SG.Parent = game:GetService("CoreGui") end) if not SG.Parent then SG.Parent = player.PlayerGui end
 local DataHUD = Instance.new("Frame") DataHUD.Size = UDim2.new(0, 210, 0, 105) DataHUD.Position = UDim2.new(0, 20, 0.3, 0) DataHUD.BackgroundColor3 = Color3.fromRGB(20, 24, 34) DataHUD.BackgroundTransparency = 0.1 DataHUD.BorderSizePixel = 0 DataHUD.ZIndex = 500 DataHUD.Parent = SG
 corner(DataHUD, 10) stroke(DataHUD, C.accent, 1.5, 0.2)
-local HUDTitle = Instance.new("TextLabel") HUDTitle.Size = UDim2.new(1, 0, 0, 24) HUDTitle.BackgroundTransparency = 1 HUDTitle.Text = "📊 力量之冠封存全能版 9.1 · 累计总数据" HUDTitle.TextColor3 = C.accent HUDTitle.Font = Enum.Font.GothamBold HUDTitle.TextSize = 12 HUDTitle.ZIndex = 501 HUDTitle.Parent = DataHUD
+local HUDTitle = Instance.new("TextLabel") HUDTitle.Size = UDim2.new(1, 0, 0, 24) HUDTitle.BackgroundTransparency = 1 HUDTitle.Text = "📊 力量之冠封存全能版 3.5 · 累计总数据" HUDTitle.TextColor3 = C.accent HUDTitle.Font = Enum.Font.GothamBold HUDTitle.TextSize = 12 HUDTitle.ZIndex = 501 HUDTitle.Parent = DataHUD
 local LabelReps = Instance.new("TextLabel") LabelReps.Size = UDim2.new(0.5, -10, 0, 18) LabelReps.Position = UDim2.new(0, 10, 0, 30) LabelReps.BackgroundTransparency = 1 LabelReps.Text = "总训练: 0" LabelReps.TextColor3 = Color3.fromRGB(230, 230, 235) LabelReps.Font = Enum.Font.Gotham LabelReps.TextSize = 11 LabelReps.TextXAlignment = Enum.TextXAlignment.Left LabelReps.ZIndex = 501 LabelReps.Parent = DataHUD
 local LabelRebirth = Instance.new("TextLabel") LabelRebirth.Size = UDim2.new(0.5, -10, 0, 18) LabelRebirth.Position = UDim2.new(0, 10, 0, 50) LabelRebirth.BackgroundTransparency = 1 LabelRebirth.Text = "总转生: 0" LabelRebirth.TextColor3 = Color3.fromRGB(230, 230, 235) LabelRebirth.Font = Enum.Font.Gotham LabelRebirth.TextSize = 11 LabelRebirth.TextXAlignment = Enum.TextXAlignment.Left LabelRebirth.ZIndex = 501 LabelRebirth.Parent = DataHUD
 local LabelTime = Instance.new("TextLabel") LabelTime.Size = UDim2.new(1, -20, 0, 18) LabelTime.Position = UDim2.new(0, 10, 0, 70) LabelTime.BackgroundTransparency = 1 LabelTime.Text = "总时长: 00:00:00" LabelTime.TextColor3 = Color3.fromRGB(230, 230, 235) LabelTime.Font = Enum.Font.Gotham LabelTime.TextSize = 11 LabelTime.TextXAlignment = Enum.TextXAlignment.Left LabelTime.ZIndex = 501 LabelTime.Parent = DataHUD
@@ -688,4 +724,4 @@ local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoi
 if hum then hum.WalkSpeed = Cfg.WalkSpeed end
 if Cfg.AntiIdleKick then applyAntiIdleKick() end
 
-print("[力量之冠封存全能版 9.1 · 影院模式已就绪]")
+print("[力量之冠封存全能版 3.5 · 影院模式已就绪]")
