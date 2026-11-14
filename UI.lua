@@ -179,19 +179,17 @@ local tintGrad = new("UIGradient", {
 	}),
 }, tint)
 
-if CONFIG.FxCCTint then
-	TweenService:Create(
-		tintGrad,
-		TweenInfo.new(14, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1),
-		{ Rotation = 360 }
-	):Play()
-end
+local fxTick = 0
+local fxAcc = 0
+local busyUntil = 0
+local slowFrames = 0
+tintGrad.Rotation = 0
 
 local dim = new("Frame", {
 	Name = "Dim",
 	Size = UDim2.fromScale(1, 1),
 	BackgroundColor3 = Color3.new(0, 0, 0),
-	BackgroundTransparency = 0.48,
+	BackgroundTransparency = 0.36,
 	BorderSizePixel = 0,
 	ZIndex = 3,
 }, panel)
@@ -237,13 +235,7 @@ local panelRingGrad = new("UIGradient", {
 	}),
 }, panelRingStroke)
 
-if CONFIG.FxRing then
-	TweenService:Create(
-		panelRingGrad,
-		TweenInfo.new(6.5, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1),
-		{ Rotation = 360 }
-	):Play()
-end
+panelRingGrad.Rotation = 0
 
 -- 周期性扫光
 local sweep = new("Frame", {
@@ -265,13 +257,30 @@ new("UIGradient", {
 	}),
 }, sweep)
 
-if CONFIG.FxSweep then
-	TweenService:Create(
-		sweep,
-		TweenInfo.new(1.5, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1, false, CONFIG.SweepDelay),
-		{ Position = UDim2.fromScale(1.4, -0.25) }
-	):Play()
-end
+sweep.Position = UDim2.fromScale(-0.7, -0.25)
+
+local shimmer = new("Frame", {
+	Name = "Shimmer",
+	Size = UDim2.new(0.15, 0, 1.9, 0),
+	Position = UDim2.fromScale(-0.55, -0.45),
+	Rotation = 28,
+	BackgroundColor3 = Color3.new(1, 1, 1),
+	BackgroundTransparency = 0.62,
+	BorderSizePixel = 0,
+	ZIndex = 13,
+}, panel)
+
+new("UIGradient", {
+	Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0.00, 1),
+		NumberSequenceKeypoint.new(0.40, 0.86),
+		NumberSequenceKeypoint.new(0.50, 0.22),
+		NumberSequenceKeypoint.new(0.60, 0.86),
+		NumberSequenceKeypoint.new(1.00, 1),
+	}),
+}, shimmer)
+
+shimmer.Position = UDim2.fromScale(-0.55, -0.45)
 
 -- ======================== 标题栏 ========================
 local titleBar = new("Frame", {
@@ -489,7 +498,7 @@ local function playPageIntro(page)
 					end
 				end)
 			end
-			if i >= 12 then
+			if i >= 8 then
 				break
 			end
 		end
@@ -520,10 +529,22 @@ local function selectTab(tab)
 	for _, t in ipairs(tabs) do
 		local on = (t == tab)
 		t.Active = on
-		t.Page.Visible = on
-		tween(t.Button, 0.18, { BackgroundTransparency = on and 0.82 or 1 }, Enum.EasingStyle.Quad)
-		tween(t.Label, 0.18, { TextColor3 = on and COLOR.Text or COLOR.TextDim }, Enum.EasingStyle.Quad)
-		tween(t.Indicator, 0.18, { BackgroundTransparency = on and 0 or 1 }, Enum.EasingStyle.Quad)
+
+		if on then
+			t.Page.Visible = true
+			t.Wrap.Visible = true
+			t.Wrap.GroupTransparency = 1
+			t.WrapScale.Scale = 0.94
+			tween(t.Wrap, 0.2, { GroupTransparency = 0 }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			tween(t.WrapScale, 0.4, { Scale = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+		else
+			t.Page.Visible = false
+			t.Wrap.Visible = false
+		end
+
+		tween(t.Button, 0.24, { BackgroundTransparency = on and 0.82 or 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+		tween(t.Label, 0.2, { TextColor3 = on and COLOR.Text or COLOR.TextDim }, Enum.EasingStyle.Quad)
+		tween(t.Indicator, 0.24, { BackgroundTransparency = on and 0 or 1 }, Enum.EasingStyle.Quad)
 	end
 
 	playPageIntro(tab.Page)
@@ -669,6 +690,19 @@ local function CreateTab(title)
 		ZIndex = 6,
 	}, btn)
 
+	local pageWrap = new("CanvasGroup", {
+		Name = "PageWrap_" .. tostring(title),
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		ClipsDescendants = false,
+		GroupTransparency = 1,
+		Visible = false,
+		ZIndex = 5,
+		Parent = contentHost,
+	})
+
+	local pageWrapScale = new("UIScale", { Scale = 1 }, pageWrap)
+
 	local page = new("ScrollingFrame", {
 		Name = "Page_" .. tostring(title),
 		Size = UDim2.fromScale(1, 1),
@@ -680,9 +714,9 @@ local function CreateTab(title)
 		CanvasSize = UDim2.new(),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y,
 		ScrollingDirection = Enum.ScrollingDirection.Y,
-		Visible = false,
+		Visible = true,
 		ZIndex = 5,
-		Parent = contentHost,
+		Parent = pageWrap,
 	})
 
 	new("UIListLayout", {
@@ -706,6 +740,8 @@ local function CreateTab(title)
 		Label = label,
 		Indicator = indicator,
 		Page = page,
+		Wrap = pageWrap,
+		WrapScale = pageWrapScale,
 		Active = false,
 		RowCount = 0,
 		Index = index,
@@ -918,7 +954,6 @@ local function CreateDropdown(tab, title, options, default, callback)
 
 	hookHover(row, stroke)
 
-	-- 菜单挂在 panel 上，避免被 ScrollingFrame 裁切
 	local menu = new("CanvasGroup", {
 		Name = "DropdownMenu",
 		BackgroundColor3 = Color3.fromRGB(28, 30, 36),
@@ -927,16 +962,52 @@ local function CreateDropdown(tab, title, options, default, callback)
 		ClipsDescendants = true,
 		GroupTransparency = 1,
 		Visible = false,
-		ZIndex = 20,
+		ZIndex = 30,
 		Parent = panel,
 	})
 	corner(menu, 8)
-	new("UIStroke", {
+
+	local menuStroke = new("UIStroke", {
 		Color = COLOR.Accent,
-		Transparency = 0.7,
+		Transparency = 0.5,
 		Thickness = 1,
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 	}, menu)
+
+	new("UIGradient", {
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0.00, COLOR.Accent),
+			ColorSequenceKeypoint.new(0.50, COLOR.Accent2),
+			ColorSequenceKeypoint.new(1.00, COLOR.Accent),
+		}),
+	}, menuStroke)
+
+	local list = new("ScrollingFrame", {
+		Name = "List",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		ScrollBarThickness = 3,
+		ScrollBarImageColor3 = COLOR.Accent,
+		ScrollBarImageTransparency = 0.35,
+		CanvasSize = UDim2.new(),
+		AutomaticCanvasSize = Enum.AutomaticSize.Y,
+		ScrollingDirection = Enum.ScrollingDirection.Y,
+		ElasticBehavior = Enum.ElasticBehavior.Never,
+		ZIndex = 31,
+	}, menu)
+
+	new("UIListLayout", {
+		Padding = UDim.new(0, 2),
+		SortOrder = Enum.SortOrder.LayoutOrder,
+	}, list)
+
+	new("UIPadding", {
+		PaddingLeft = UDim.new(0, 4),
+		PaddingRight = UDim.new(0, 4),
+		PaddingTop = UDim.new(0, 4),
+		PaddingBottom = UDim.new(0, 4),
+	}, list)
 
 	local itemButtons = {}
 	local currentIndex = 1
@@ -958,15 +1029,15 @@ local function CreateDropdown(tab, title, options, default, callback)
 	for i, opt in ipairs(options) do
 		local item = new("TextButton", {
 			Name = "Item" .. i,
-			Position = UDim2.fromOffset(4, 4 + (i - 1) * 26),
-			Size = UDim2.new(1, -8, 0, 26),
+			Size = UDim2.new(1, 0, 0, 26),
 			BackgroundColor3 = COLOR.Accent,
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 			AutoButtonColor = false,
 			Text = "",
-			ZIndex = 21,
-			Parent = menu,
+			LayoutOrder = i,
+			ZIndex = 32,
+			Parent = list,
 		})
 		corner(item, 6)
 
@@ -1020,28 +1091,47 @@ local function CreateDropdown(tab, title, options, default, callback)
 	paintItems()
 
 	local function openMenu()
-		local menuH = #options * 26 + 8
 		local s = panelScale.Scale
+		local itemH = 26
+		local gap = 2
+		local padY = 8
+		local maxH = 150
+		local panelH = CONFIG.PanelSize.Y.Offset
 
+		local rawH = #options * itemH + (#options - 1) * gap + padY
 		local rowAbs = row.AbsolutePosition
 		local rowSize = row.AbsoluteSize
 		local pAbs = panel.AbsolutePosition
 
+		local rowTop = (rowAbs.Y - pAbs.Y) / s
+		local rowBottom = rowTop + rowSize.Y / s
 		local localX = (rowAbs.X - pAbs.X) / s
-		local localY = (rowAbs.Y - pAbs.Y) / s + rowSize.Y / s + 4
 		local localW = rowSize.X / s
 
-		-- 超出面板底部就改成向上弹
-		local panelH = CONFIG.PanelSize.Y.Offset
-		if localY + menuH > panelH - 8 then
-			localY = (rowAbs.Y - pAbs.Y) / s - menuH - 4
-		end
+		local spaceBelow = panelH - rowBottom - 8
+		local spaceAbove = rowTop - 8
 
-		menu.Position = UDim2.fromOffset(localX, localY)
-		menu.Size = UDim2.fromOffset(localW, menuH)
+		local h = math.min(rawH, maxH, math.max(spaceBelow, spaceAbove))
+		h = math.max(h, math.min(rawH, 60))
+
+		local y
+		if spaceBelow >= h then
+			y = rowBottom + 4
+		elseif spaceAbove >= h then
+			y = rowTop - h - 4
+		else
+			y = rowBottom + 4
+		end
+		y = math.clamp(y, 4, math.max(4, panelH - h - 4))
+
+		list.ScrollBarThickness = (rawH > h) and 3 or 0
+		list.CanvasPosition = Vector2.new(0, 0)
+
+		menu.Position = UDim2.fromOffset(localX, y)
+		menu.Size = UDim2.fromOffset(localW, h)
 		menu.Visible = true
 		menu.GroupTransparency = 1
-		tween(menu, 0.16, { GroupTransparency = 0 }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		tween(menu, 0.18, { GroupTransparency = 0 }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end
 
 	hit.MouseButton1Click:Connect(function()
@@ -1216,58 +1306,86 @@ local glass = new("Frame", {
 	Name = "Glass",
 	Size = UDim2.fromScale(1, 1),
 	BackgroundColor3 = COLOR.Glass,
-	BackgroundTransparency = 0.62,
+	BackgroundTransparency = 0.5,
 	BorderSizePixel = 0,
 	ClipsDescendants = true,
 	ZIndex = 1,
 }, hover)
 corner(glass, CONFIG.MiniCorner)
 
+new("UIGradient", {
+	Rotation = 90,
+	Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0.00, 0.14),
+		NumberSequenceKeypoint.new(0.42, 0.38),
+		NumberSequenceKeypoint.new(1.00, 0.70),
+	}),
+}, glass)
+
 math.randomseed(os.time())
-for i = 1, 20 do
+for i = 1, 18 do
 	local dot = new("Frame", {
 		Name = "Grain" .. i,
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.fromScale(math.random(6, 94) / 100, math.random(6, 94) / 100),
-		Size = UDim2.fromOffset(math.random(1, 2), math.random(1, 2)),
+		Position = UDim2.fromScale(math.random(8, 92) / 100, math.random(8, 92) / 100),
+		Size = UDim2.fromOffset(1, 1),
 		BackgroundColor3 = Color3.new(1, 1, 1),
-		BackgroundTransparency = 0.82 + math.random() * 0.12,
+		BackgroundTransparency = 0.70 + math.random() * 0.20,
 		BorderSizePixel = 0,
 		ZIndex = 2,
 	}, glass)
-	corner(dot, 2)
 end
+
+local topLine = new("Frame", {
+	Position = UDim2.new(0, 5, 0, 1),
+	Size = UDim2.new(1, -10, 0, 1),
+	BackgroundColor3 = Color3.new(1, 1, 1),
+	BackgroundTransparency = 0.45,
+	BorderSizePixel = 0,
+	ZIndex = 3,
+}, glass)
+corner(topLine, 1)
+
+local bottomShade = new("Frame", {
+	Position = UDim2.new(0, 0, 1, -12),
+	Size = UDim2.new(1, 0, 0, 12),
+	BackgroundColor3 = Color3.fromRGB(6, 8, 14),
+	BackgroundTransparency = 0.55,
+	BorderSizePixel = 0,
+	ZIndex = 2,
+}, glass)
+new("UIGradient", {
+	Rotation = 90,
+	Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 1),
+		NumberSequenceKeypoint.new(1, 0.3),
+	}),
+}, bottomShade)
 
 local sheen = new("Frame", {
 	Name = "Sheen",
 	Size = UDim2.fromScale(1, 1),
 	BackgroundColor3 = Color3.new(1, 1, 1),
-	BackgroundTransparency = 0.5,
+	BackgroundTransparency = 0.55,
 	BorderSizePixel = 0,
 	ZIndex = 3,
 }, glass)
 corner(sheen, CONFIG.MiniCorner)
 
 local sheenGrad = new("UIGradient", {
-	Rotation = 18,
+	Rotation = 16,
 	Offset = Vector2.new(-1.6, 0),
 	Transparency = NumberSequence.new({
 		NumberSequenceKeypoint.new(0.00, 1),
-		NumberSequenceKeypoint.new(0.42, 0.70),
-		NumberSequenceKeypoint.new(0.58, 0.70),
+		NumberSequenceKeypoint.new(0.44, 0.74),
+		NumberSequenceKeypoint.new(0.56, 0.74),
 		NumberSequenceKeypoint.new(1.00, 1),
 	}),
 }, sheen)
 
-TweenService:Create(
-	sheenGrad,
-	TweenInfo.new(2.8, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1),
-	{ Offset = Vector2.new(1.6, 0) }
-):Play()
-
 new("UIStroke", {
 	Color = Color3.new(1, 1, 1),
-	Transparency = 0.72,
+	Transparency = 0.66,
 	Thickness = 1,
 	ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 }, glass)
@@ -1306,11 +1424,7 @@ local ringGrad = new("UIGradient", {
 	}),
 }, ringStroke)
 
-TweenService:Create(
-	ringGrad,
-	TweenInfo.new(3.2, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1),
-	{ Rotation = 360 }
-):Play()
+ringGrad.Rotation = 0
 
 local miniImg = new("ImageLabel", {
 	Name = "Icon",
@@ -1340,7 +1454,10 @@ miniAlpha.Value = 0
 
 local function applyMiniAlpha()
 	local a = miniAlpha.Value
-	glass.BackgroundTransparency = 0.62 + (1 - a) * 0.38
+	glass.BackgroundTransparency = 0.5 + (1 - a) * 0.5
+	sheen.BackgroundTransparency = 0.55 + (1 - a) * 0.45
+	topLine.BackgroundTransparency = 0.45 + (1 - a) * 0.55
+	bottomShade.BackgroundTransparency = 0.55 + (1 - a) * 0.45
 	miniImg.ImageTransparency = 1 - a
 end
 miniAlpha.Changed:Connect(applyMiniAlpha)
@@ -1436,11 +1553,7 @@ local confirmRingGrad = new("UIGradient", {
 	}),
 }, confirmRingStroke)
 
-TweenService:Create(
-	confirmRingGrad,
-	TweenInfo.new(3.6, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1),
-	{ Rotation = 360 }
-):Play()
+confirmRingGrad.Rotation = 0
 
 local confirmGlow = new("Frame", {
 	Size = UDim2.new(1, 0, 0, 70),
@@ -1627,6 +1740,57 @@ RunService.Heartbeat:Connect(function(dt)
 
 	if confirm.Visible then
 		confirmStroke.Transparency = 0.55 + s * 0.3
+		confirmRingGrad.Rotation = (phase * 100) % 360
+	end
+
+	if dt > 0.026 then
+		slowFrames += 1
+	elseif slowFrames > 0 then
+		slowFrames -= 1
+	end
+
+	fxAcc += dt
+	if fxAcc < (slowFrames > 25 and 0.055 or 0.033) then
+		return
+	end
+
+	local step = fxAcc
+	fxAcc = 0
+
+	if os.clock() < busyUntil then
+		return
+	end
+
+	fxTick += step
+
+	if panel.Visible then
+		if CONFIG.FxCCTint then
+			tintGrad.Rotation = (fxTick * 25) % 360
+		end
+		if CONFIG.FxRing then
+			panelRingGrad.Rotation = (fxTick * 55) % 360
+		end
+		if CONFIG.FxSweep then
+			local t = (fxTick % 5.3) / 1.5
+			if t <= 1 then
+				sweep.Position = UDim2.fromScale(-0.7 + t * 2.1, -0.25)
+			else
+				sweep.Position = UDim2.fromScale(-0.7, -0.25)
+			end
+		end
+		local st = (fxTick % 7.65) / 1.15
+		local sx
+		if st <= 1 then
+			sx = -0.55 + st * 2.2
+		else
+			sx = -0.55
+		end
+		shimmer.Position = UDim2.fromScale(sx, -0.45)
+	end
+
+	if mini.Visible then
+		ringGrad.Rotation = (fxTick * 112) % 360
+		sheenGrad.Offset = Vector2.new(-1.6 + ((fxTick % 2.8) / 2.8) * 3.2, 0)
 	end
 end)
 
@@ -1637,20 +1801,30 @@ local function openPanel()
 	state = "open"
 	revive.Visible = false
 	mini.Visible = false
+	busyUntil = os.clock() + CONFIG.OpenTime + 0.06
 
 	panel.Visible = true
 	panelScale.Scale = BASE_SCALE * CONFIG.OpenFromScale
 	panel.GroupTransparency = 1
 
 	tween(panelScale, CONFIG.OpenTime, { Scale = BASE_SCALE }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-	tween(panel, CONFIG.OpenTime, { GroupTransparency = 0 }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+	tween(panel, CONFIG.OpenTime * 0.5, { GroupTransparency = 0 }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
-	playRipple()
-	playPageIntro(activeTab and activeTab.Page)
+	task.delay(0.15, function()
+		if state == "open" then
+			playRipple()
+		end
+	end)
+	task.delay(0.24, function()
+		if state == "open" then
+			playPageIntro(activeTab and activeTab.Page)
+		end
+	end)
 end
 
 local function showMini()
 	state = "mini"
+	busyUntil = os.clock() + 0.42
 	mini.Visible = true
 	miniScale.Scale = 0.55
 	hoverScale.Scale = 1
@@ -1666,6 +1840,7 @@ local function toMini()
 		return
 	end
 	state = "mini"
+	busyUntil = os.clock() + CONFIG.MiniTime + 0.06
 	closeMenu()
 
 	tween(panel, CONFIG.MiniTime, { GroupTransparency = 1 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
@@ -1685,6 +1860,7 @@ local function fromMini()
 		return
 	end
 	state = "opening"
+	busyUntil = os.clock() + 0.26
 
 	tween(miniScale, 0.16, { Scale = 0.6 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 	local fade = tween(miniAlpha, 0.16, { Value = 0 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
@@ -1703,6 +1879,7 @@ local function closeAll()
 		return
 	end
 	state = "closed"
+	busyUntil = os.clock() + 0.3
 
 	confirmOpen = false
 	confirm.Visible = false
@@ -1790,6 +1967,7 @@ miniBtn.InputBegan:Connect(function(input)
 		miniDragStart = input.Position
 		miniStartPos = mini.Position
 		miniMoved = false
+		tween(hoverScale, 0.09, { Scale = 0.93 }, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 	end
 end)
 
@@ -1824,7 +2002,8 @@ UserInputService.InputEnded:Connect(function(input)
 
 	if miniDragInput and input == miniDragInput then
 		miniDragInput = nil
-		setHover(false)
+		hovering = false
+		tween(hoverScale, 0.16, { Scale = 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 		if not miniMoved then
 			fromMini()
 		end
