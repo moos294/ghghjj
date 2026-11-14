@@ -50,8 +50,8 @@ local CONFIG = {
 	-- 缩小后的玻璃方块
 	MiniSize       = 48,
 	MiniCorner     = 17,
-	MiniIconScale  = 0.60,
-	MiniIconCorner = 11,
+	MiniIconScale  = 0.56,
+	MiniIconCorner = 10,
 	MiniPos        = UDim2.fromScale(0.5, 0.5),
 
 	OpenTime      = 0.32,
@@ -65,7 +65,7 @@ local CONFIG = {
 	FxRing     = true,
 	FxBreathe  = true,
 	FxCCTint   = true,
-	FxSweep    = true,
+	FxSweep    = false,
 	FxRipple   = true,
 	FxRowIntro = true,
 
@@ -155,6 +155,7 @@ local bg = new("ImageLabel", {
 	Size = UDim2.fromScale(1, 1),
 	BackgroundTransparency = 1,
 	Image = CONFIG.BgImage,
+	ImageTransparency = 0.42,
 	ScaleType = Enum.ScaleType.Crop,
 	ZIndex = 1,
 }, panel)
@@ -182,14 +183,13 @@ local tintGrad = new("UIGradient", {
 local fxTick = 0
 local fxAcc = 0
 local busyUntil = 0
-local slowFrames = 0
 tintGrad.Rotation = 0
 
 local dim = new("Frame", {
 	Name = "Dim",
 	Size = UDim2.fromScale(1, 1),
 	BackgroundColor3 = Color3.new(0, 0, 0),
-	BackgroundTransparency = 0.36,
+	BackgroundTransparency = 0.26,
 	BorderSizePixel = 0,
 	ZIndex = 3,
 }, panel)
@@ -425,7 +425,8 @@ local tabBar = new("ScrollingFrame", {
 	Name = "TabBar",
 	Position = UDim2.fromOffset(CONFIG.TabBarX, CONTENT_Y),
 	Size = UDim2.new(0, CONFIG.TabBarWidth, 1, -(CONTENT_Y + 10)),
-	BackgroundTransparency = 1,
+	BackgroundColor3 = COLOR.Sunken,
+	BackgroundTransparency = 0.32,
 	BorderSizePixel = 0,
 	ScrollBarThickness = 0,
 	CanvasSize = UDim2.new(),
@@ -433,6 +434,7 @@ local tabBar = new("ScrollingFrame", {
 	ScrollingDirection = Enum.ScrollingDirection.Y,
 	ZIndex = 4,
 }, panel)
+corner(tabBar, 8)
 
 new("UIListLayout", {
 	Padding = UDim.new(0, 4),
@@ -451,7 +453,7 @@ local splitLine = new("Frame", {
 	Position = UDim2.fromOffset(CONFIG.TabBarX + CONFIG.TabBarWidth + 3, CONTENT_Y + 2),
 	Size = UDim2.new(0, 1, 1, -(CONTENT_Y + 16)),
 	BackgroundColor3 = COLOR.Stroke,
-	BackgroundTransparency = 0.88,
+	BackgroundTransparency = 0.62,
 	BorderSizePixel = 0,
 	ZIndex = 4,
 }, panel)
@@ -459,7 +461,7 @@ new("UIGradient", {
 	Rotation = 90,
 	Transparency = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 1),
-		NumberSequenceKeypoint.new(0.5, 0.3),
+		NumberSequenceKeypoint.new(0.5, 0.1),
 		NumberSequenceKeypoint.new(1, 1),
 	}),
 }, splitLine)
@@ -543,7 +545,7 @@ local function selectTab(tab)
 		end
 
 		tween(t.Button, 0.24, { BackgroundTransparency = on and 0.82 or 1 }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-		tween(t.Label, 0.2, { TextColor3 = on and COLOR.Text or COLOR.TextDim }, Enum.EasingStyle.Quad)
+		tween(t.Label, 0.2, { TextColor3 = on and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(198, 208, 228) }, Enum.EasingStyle.Quad)
 		tween(t.Indicator, 0.24, { BackgroundTransparency = on and 0 or 1 }, Enum.EasingStyle.Quad)
 	end
 
@@ -681,14 +683,19 @@ local function CreateTab(title)
 		Position = UDim2.fromOffset(14, 0),
 		Size = UDim2.new(1, -18, 1, 0),
 		BackgroundTransparency = 1,
-		Font = Enum.Font.GothamMedium,
+		Font = Enum.Font.GothamBold,
 		Text = tostring(title),
 		TextSize = 12,
-		TextColor3 = COLOR.TextDim,
+		TextColor3 = COLOR.Text,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextTruncate = Enum.TextTruncate.AtEnd,
 		ZIndex = 6,
 	}, btn)
+	new("UIStroke", {
+		Color = Color3.new(0, 0, 0),
+		Transparency = 0.45,
+		Thickness = 1,
+	}, label)
 
 	local pageWrap = new("CanvasGroup", {
 		Name = "PageWrap_" .. tostring(title),
@@ -1346,22 +1353,6 @@ local topLine = new("Frame", {
 }, glass)
 corner(topLine, 1)
 
-local bottomShade = new("Frame", {
-	Position = UDim2.new(0, 0, 1, -12),
-	Size = UDim2.new(1, 0, 0, 12),
-	BackgroundColor3 = Color3.fromRGB(6, 8, 14),
-	BackgroundTransparency = 0.55,
-	BorderSizePixel = 0,
-	ZIndex = 2,
-}, glass)
-new("UIGradient", {
-	Rotation = 90,
-	Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 1),
-		NumberSequenceKeypoint.new(1, 0.3),
-	}),
-}, bottomShade)
-
 local sheen = new("Frame", {
 	Name = "Sheen",
 	Size = UDim2.fromScale(1, 1),
@@ -1436,7 +1427,7 @@ local miniImg = new("ImageLabel", {
 	ScaleType = Enum.ScaleType.Crop,
 	ImageTransparency = 1,
 	ZIndex = 6,
-}, hover)
+}, glass)
 corner(miniImg, CONFIG.MiniIconCorner)
 
 local miniBtn = new("TextButton", {
@@ -1457,7 +1448,6 @@ local function applyMiniAlpha()
 	glass.BackgroundTransparency = 0.5 + (1 - a) * 0.5
 	sheen.BackgroundTransparency = 0.55 + (1 - a) * 0.45
 	topLine.BackgroundTransparency = 0.45 + (1 - a) * 0.55
-	bottomShade.BackgroundTransparency = 0.55 + (1 - a) * 0.45
 	miniImg.ImageTransparency = 1 - a
 end
 miniAlpha.Changed:Connect(applyMiniAlpha)
@@ -1467,7 +1457,7 @@ local hovering = false
 
 local function setHover(on)
 	hovering = on
-	tween(hoverScale, 0.18, { Scale = on and 1.08 or 1 }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+	tween(hoverScale, 0.18, { Scale = on and 1.06 or 1 }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 end
 
 miniBtn.MouseEnter:Connect(function() setHover(true) end)
@@ -1743,14 +1733,8 @@ RunService.Heartbeat:Connect(function(dt)
 		confirmRingGrad.Rotation = (phase * 100) % 360
 	end
 
-	if dt > 0.026 then
-		slowFrames += 1
-	elseif slowFrames > 0 then
-		slowFrames -= 1
-	end
-
 	fxAcc += dt
-	if fxAcc < (slowFrames > 25 and 0.055 or 0.033) then
+	if fxAcc < 0.033 then
 		return
 	end
 
@@ -1803,12 +1787,11 @@ local function openPanel()
 	mini.Visible = false
 	busyUntil = os.clock() + CONFIG.OpenTime + 0.06
 
+	panel.GroupTransparency = 0
 	panel.Visible = true
 	panelScale.Scale = BASE_SCALE * CONFIG.OpenFromScale
-	panel.GroupTransparency = 1
 
 	tween(panelScale, CONFIG.OpenTime, { Scale = BASE_SCALE }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-	tween(panel, CONFIG.OpenTime * 0.5, { GroupTransparency = 0 }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
 	task.delay(0.15, function()
 		if state == "open" then
@@ -1843,7 +1826,6 @@ local function toMini()
 	busyUntil = os.clock() + CONFIG.MiniTime + 0.06
 	closeMenu()
 
-	tween(panel, CONFIG.MiniTime, { GroupTransparency = 1 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 	local shrink = tween(panelScale, CONFIG.MiniTime, { Scale = BASE_SCALE * 0.14 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 
 	shrink.Completed:Once(function()
@@ -1891,8 +1873,7 @@ local function closeAll()
 		tween(miniAlpha, 0.16, { Value = 0 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 	end
 
-	tween(panel, 0.2, { GroupTransparency = 1 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-	local fade = tween(panelScale, 0.2, { Scale = BASE_SCALE * 0.9 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+	local fade = tween(panelScale, 0.18, { Scale = BASE_SCALE * 0.86 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 
 	fade.Completed:Once(function()
 		if state ~= "closed" then
