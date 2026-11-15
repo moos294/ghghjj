@@ -1032,7 +1032,7 @@ local function CreateDropdown(tab, title, options, default, callback)
 			item.Dot.BackgroundTransparency = on and 0 or 1
 		end
 	end
-
+local function buildItems()
 	for i, opt in ipairs(options) do
 		local item = new("TextButton", {
 			Name = "Item" .. i,
@@ -1040,9 +1040,9 @@ local function CreateDropdown(tab, title, options, default, callback)
 			BackgroundColor3 = COLOR.Accent,
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
-			AutoButtonColor = false,
+			AutoButtonColor = false,			
 			Text = "",
-			LayoutOrder = i,
+			LayoutOrder = i,			
 			ZIndex = 32,
 			Parent = list,
 		})
@@ -1094,7 +1094,8 @@ local function CreateDropdown(tab, title, options, default, callback)
 			end
 		end)
 	end
-
+	end
+    buildItems()
 	paintItems()
 
 	local function openMenu()
@@ -1164,6 +1165,36 @@ local function CreateDropdown(tab, title, options, default, callback)
 				end
 			end
 		end,
+				Set = function(v)
+			for i, opt in ipairs(options) do
+				if tostring(opt) == tostring(v) then
+					currentIndex = i
+					valueLabel.Text = tostring(opt)
+					paintItems()
+					return
+				end
+			end
+		end,
+		SetOptions = function(newOptions, newDefault)
+			if type(newOptions) ~= "table" or #newOptions == 0 then return end
+			options = newOptions
+			
+			currentIndex = 1
+			if newDefault then
+				for i, opt in ipairs(options) do
+					if tostring(opt) == tostring(newDefault) then
+						currentIndex = i
+						break
+					end
+				end
+			end
+			valueLabel.Text = tostring(options[currentIndex])
+			buildItems()
+			paintItems()
+		end,
+		Close = closeMenu,
+	}
+end
 		Close = closeMenu,
 	}
 end
