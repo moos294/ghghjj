@@ -1195,9 +1195,6 @@ local function buildItems()
 		Close = closeMenu,
 	}
 end
-		Close = closeMenu,
-	}
-end
 
 -- ============================================================
 --  公开接口 5：CreateInput
