@@ -1033,6 +1033,10 @@ local function CreateDropdown(tab, title, options, default, callback)
 		end
 	end
 local function buildItems()
+for _, item in ipairs(itemButtons) do
+	if item.Button then item.Button:Destroy() end
+end
+itemButtons = {}
 	for i, opt in ipairs(options) do
 		local item = new("TextButton", {
 			Name = "Item" .. i,
