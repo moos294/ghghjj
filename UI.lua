@@ -2133,8 +2133,7 @@ function WindUI:CreateWindow(args)
             local defaultOpt = args.Value or args.CurrentOption or options[1]
             local dd = OrigamiUI.CreateDropdown(realTab, args.Title, options, defaultOpt, args.Callback)
             return {
-                SetOptions = function() end, 
-                SetValue = function(self, val) if dd.Set then dd.Set(val) end end,
+                SetOptions = function(self, newOptions, newDefault) if dd.SetOptions then dd.SetOptions(newOptions, newDefault) end end,
                 Refresh = function() end,
                 Select = function(self, val) if dd.Set then dd.Set(val) end end
             }
